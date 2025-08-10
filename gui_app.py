@@ -9,7 +9,7 @@ from tkinter import ttk, messagebox, scrolledtext
 import threading
 import time
 from datetime import datetime
-from zkteco_connector import ZKTecoK40, test_connection
+from zkteco_connector_v2 import ZKTecoK40V2 as ZKTecoK40, test_connection
 
 class ZKTecoGUI:
     """Interfaz gráfica para dispositivos ZKTeco"""
@@ -19,6 +19,14 @@ class ZKTecoGUI:
         self.root.title("ZKTeco K40 - Gestor de Dispositivos")
         self.root.geometry("900x700")
         self.root.configure(bg='#f5f5f5')
+        
+        # Configurar icono de la ventana (256 píxeles)
+        try:
+            from icon_utils import set_large_256_icon
+            if set_large_256_icon(self.root):
+                print("✅ Icono de 256px configurado correctamente en ZKTeco GUI")
+        except ImportError:
+            print("⚠️ No se pudo importar icon_utils")
         
         # Variables
         self.device = None
@@ -355,7 +363,7 @@ class ZKTecoGUI:
         
         def refresh_thread():
             try:
-                users = self.device.get_user_list(0, 1000)  # Obtener hasta 1000 usuarios
+                users = self.device.get_user_list(0, 3000, include_fingerprints=False)  # Obtener hasta 3000 usuarios sin huellas
                 self.display_users(users)
             except Exception as e:
                 messagebox.showerror("Error", f"Error al obtener usuarios: {str(e)}")

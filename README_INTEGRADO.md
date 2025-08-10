@@ -1,6 +1,6 @@
-# Sistema Integrado ZKTeco + Criminalística
+# Sistema QUIRA
 
-Sistema completo que integra la gestión de dispositivos biométricos ZKTeco K40 con un sistema de gestión de postulantes para criminalística.
+Sistema QUIRA - Solución completa que integra la gestión de dispositivos biométricos ZKTeco K40 con un sistema de gestión de postulantes para criminalística.
 
 ## 🚀 Características
 

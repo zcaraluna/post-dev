@@ -54,11 +54,11 @@ class ListaPostulantes(tk.Toplevel):
     def load_institutional_image(self):
         """Cargar imagen institucional"""
         try:
-            image_path = "instituto.png"
+            image_path = "quira.png"
             if os.path.exists(image_path):
                 self.institutional_image = Image.open(image_path)
-                # Redimensionar manteniendo proporción, máximo 80px de altura
-                max_height = 80
+                # Redimensionar manteniendo proporción, máximo 60px de altura
+                max_height = 160
                 ratio = max_height / self.institutional_image.height
                 new_width = int(self.institutional_image.width * ratio)
                 self.institutional_image = self.institutional_image.resize((new_width, max_height), Image.Resampling.LANCZOS)
@@ -76,52 +76,52 @@ class ListaPostulantes(tk.Toplevel):
         
         # Frame principal con padding mínimo
         main_frame = tk.Frame(self, bg='#f8f9fa')
-        main_frame.pack(expand=True, fill='both', padx=10, pady=10)
+        main_frame.pack(expand=True, fill='both', padx=10, pady=5)
         
         # Header con imagen institucional
         header_frame = tk.Frame(main_frame, bg='#f8f9fa')
-        header_frame.pack(fill='x', pady=(0, 10))
+        header_frame.pack(fill='x', pady=0)
         
         # Título y controles superiores
         title_frame = tk.Frame(header_frame, bg='#f8f9fa')
         title_frame.pack(fill='x')
         
-        # Título con estilo moderno
+        # Título con estilo moderno más compacto
         title_label = tk.Label(title_frame, text="Lista de Postulantes", 
-                              font=('Segoe UI', 18, 'bold'), 
+                              font=('Segoe UI', 14, 'bold'), 
                               fg='#2c3e50', bg='#f8f9fa')
         title_label.pack(side='left')
         
         # Imagen institucional (si existe)
         if self.institutional_image_tk:
             image_label = tk.Label(title_frame, image=self.institutional_image_tk, bg='#f8f9fa')
-            image_label.pack(side='right', padx=(20, 0))
+            image_label.pack(side='right', padx=(10, 0))
         
         # Controles de acción eliminados para maximizar espacio de tabla
         
         # Frame de filtros con estilo moderno
         filter_frame = tk.LabelFrame(main_frame, text="Filtros de Búsqueda", 
-                                   font=('Segoe UI', 12, 'bold'), 
+                                   font=('Segoe UI', 11, 'bold'), 
                                    fg='#2c3e50', bg='#f8f9fa', 
                                    relief='flat', bd=1)
-        filter_frame.pack(fill='x', pady=(0, 10))
+        filter_frame.pack(fill='x', pady=(2, 4))
         
         # Frame interno para filtros con padding reducido
         filter_inner_frame = tk.Frame(filter_frame, bg='#f8f9fa')
-        filter_inner_frame.pack(fill='x', padx=10, pady=5)
+        filter_inner_frame.pack(fill='x', padx=8, pady=3)
         
         self.create_filters(filter_inner_frame)
         
         # Frame de tabla con estilo moderno
         table_frame = tk.LabelFrame(main_frame, text="Postulantes Registrados", 
-                                  font=('Segoe UI', 12, 'bold'), 
+                                  font=('Segoe UI', 11, 'bold'), 
                                   fg='#2c3e50', bg='#f8f9fa', 
                                   relief='flat', bd=1)
-        table_frame.pack(fill='both', expand=True, pady=(0, 10))
+        table_frame.pack(fill='both', expand=True, pady=(2, 4))
         
         # Frame interno para tabla con padding reducido
         table_inner_frame = tk.Frame(table_frame, bg='#f8f9fa')
-        table_inner_frame.pack(fill='both', expand=True, padx=10, pady=5)
+        table_inner_frame.pack(fill='both', expand=True, padx=8, pady=3)
         
         self.create_table(table_inner_frame)
         
@@ -260,7 +260,7 @@ class ListaPostulantes(tk.Toplevel):
         """Crear tabla de postulantes con columnas expandidas"""
         # Crear Treeview con columnas principales
         columns = ('ID', 'Nombre', 'Apellido', 'Cédula', 'Unidad', 'Dedo', 'Aparato', 'Fecha Registro')
-        self.tree = ttk.Treeview(parent, columns=columns, show='headings', height=20)
+        self.tree = ttk.Treeview(parent, columns=columns, show='headings', height=12)
         
         # Configurar columnas
         self.tree.heading('Nombre', text='Nombre')

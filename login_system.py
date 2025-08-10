@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sistema de login integrado para ZKTeco + Criminalística
+Sistema de login integrado para Sistema QUIRA
 """
 
 import tkinter as tk
@@ -78,7 +78,7 @@ class LoginWindow(tk.Frame):
             # Si no se puede cargar la imagen, continuar sin ella
         
         # Título principal
-        title_label = tk.Label(center_frame, text="Sistema ZKTeco + Criminalística", 
+        title_label = tk.Label(center_frame, text="Sistema QUIRA", 
                               font=('Segoe UI', 18, 'bold'), 
                               fg='#2c3e50', bg='#f8f9fa')
         title_label.pack(pady=(0, 40))
@@ -232,6 +232,13 @@ class ChangePasswordDialog(tk.Toplevel):
         self.resizable(False, False)
         self.transient(parent)
         self.grab_set()
+        
+        # Configurar icono de la ventana
+        try:
+            from icon_utils import set_window_icon
+            set_window_icon(self)
+        except ImportError:
+            pass
         
         # Configurar estilo moderno
         self.configure(bg='#f8f9fa')
@@ -462,7 +469,7 @@ class ChangePasswordDialog(tk.Toplevel):
 def main():
     """Función principal para probar el login"""
     root = tk.Tk()
-    root.title("Sistema ZKTeco + Criminalística - Login")
+    root.title("Sistema QUIRA - Login")
     
     # Inicializar base de datos
     from database import init_database

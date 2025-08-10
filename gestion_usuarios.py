@@ -22,7 +22,7 @@ except:
 class GestionUsuarios(tk.Toplevel):
     def __init__(self, parent, user_data):
         super().__init__(parent)
-        self.title("Gestión de Usuarios - Sistema ZKTeco")
+        self.title("Gestión de Usuarios - Sistema QUIRA")
         self.geometry('')
         self.resizable(True, True)
         self.transient(parent)

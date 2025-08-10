@@ -203,13 +203,14 @@ class ZKTecoK40V2:
             logger.error(f"Error al obtener cantidad de usuarios: {e}")
             return 0
     
-    def get_user_list(self, start_index: int = 0, count: int = 100) -> List[Dict[str, Any]]:
+    def get_user_list(self, start_index: int = 0, count: int = 3000, include_fingerprints: bool = False) -> List[Dict[str, Any]]:
         """
         Obtener lista de usuarios
         
         Args:
             start_index: Índice de inicio
             count: Cantidad de usuarios a obtener
+            include_fingerprints: Si incluir información de huellas (más lento)
             
         Returns:
             Lista de diccionarios con información de usuarios
@@ -249,36 +250,50 @@ class ZKTecoK40V2:
             
             user_list = []
             
-            for user in users[start_index:start_index + count]:
+            # Calcular el rango de usuarios a procesar
+            total_users = len(users)
+            end_index = min(start_index + count, total_users)
+            start_index = max(0, start_index)
+            
+            # Si se solicita obtener los últimos N usuarios, ajustar el índice
+            if start_index == 0 and count < total_users:
+                start_index = max(0, total_users - count)
+                end_index = total_users
+            
+            logger.info(f"Procesando usuarios {start_index} a {end_index} de {total_users} totales")
+            
+            for user in users[start_index:end_index]:
                 try:
-                    # Obtener huellas del usuario de forma más simple
-                    try:
-                        # Intentar obtener templates directamente del usuario
-                        if hasattr(user, 'fingerprints') and user.fingerprints:
-                            fingerprint_count = len(user.fingerprints)
-                        else:
-                            # Usar un método más simple para contar templates
-                            fingerprint_count = 0
-                            try:
-                                # Intentar obtener el primer template para verificar si tiene huellas
-                                template = self.conn.get_user_template(uid=user.uid, temp_id=0)
-                                if template:
-                                    fingerprint_count = 1
-                                    # Intentar obtener más templates
-                                    for temp_id in range(1, 5):  # Solo probar hasta 5 templates
-                                        try:
-                                            template = self.conn.get_user_template(uid=user.uid, temp_id=temp_id)
-                                            if template:
-                                                fingerprint_count += 1
-                                            else:
+                    fingerprint_count = 0
+                    
+                    # Solo obtener huellas si se solicita explícitamente
+                    if include_fingerprints:
+                        try:
+                            # Intentar obtener templates directamente del usuario
+                            if hasattr(user, 'fingerprints') and user.fingerprints:
+                                fingerprint_count = len(user.fingerprints)
+                            else:
+                                # Usar un método más simple para contar templates
+                                try:
+                                    # Intentar obtener el primer template para verificar si tiene huellas
+                                    template = self.conn.get_user_template(uid=user.uid, temp_id=0)
+                                    if template:
+                                        fingerprint_count = 1
+                                        # Intentar obtener más templates
+                                        for temp_id in range(1, 5):  # Solo probar hasta 5 templates
+                                            try:
+                                                template = self.conn.get_user_template(uid=user.uid, temp_id=temp_id)
+                                                if template:
+                                                    fingerprint_count += 1
+                                                else:
+                                                    break
+                                            except:
                                                 break
-                                        except:
-                                            break
-                            except:
-                                fingerprint_count = 0
-                    except Exception as e:
-                        logger.warning(f"No se pudo obtener huellas para usuario {user.uid}: {e}")
-                        fingerprint_count = 0
+                                except:
+                                    fingerprint_count = 0
+                        except Exception as e:
+                            logger.warning(f"No se pudo obtener huellas para usuario {user.uid}: {e}")
+                            fingerprint_count = 0
                     
                     user_info = {
                         'uid': getattr(user, 'uid', 'N/A'),

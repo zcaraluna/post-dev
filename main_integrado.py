@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sistema Integrado ZKTeco + Criminalística
+Sistema QUIRA
 Punto de entrada principal del sistema
 """
 
@@ -86,7 +86,7 @@ def check_zkteco_connection():
 
 def main():
     """Función principal del sistema"""
-    print("🚀 Iniciando Sistema ZKTeco + Criminalística")
+    print("🚀 Iniciando Sistema QUIRA")
     print("=" * 50)
     
     # Verificar dependencias
@@ -105,7 +105,15 @@ def main():
     
     # Crear ventana principal
     root = tk.Tk()
-    root.title("Sistema ZKTeco + Criminalística")
+    root.title("Sistema QUIRA")
+    
+    # Configurar icono de la ventana (256 píxeles)
+    try:
+        from icon_utils import set_large_256_icon
+        if set_large_256_icon(root):
+            print("✅ Icono de 256px configurado correctamente")
+    except ImportError:
+        print("⚠️ No se pudo importar icon_utils")
     
     # Mostrar estado del sistema
     if zkteco_available:

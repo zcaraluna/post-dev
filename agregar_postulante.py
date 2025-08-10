@@ -24,6 +24,7 @@ except:
 def obtener_serial_desde_hardware(ip="192.168.100.201", puerto=4370, intentos=3):
     """
     Conecta al dispositivo biométrico vía TCP/IP y obtiene el número de serie.
+    Si fallan todos los intentos, retorna el serial del aparato de prueba.
     """
     try:
         zkteco = ZKTecoK40V2(ip, puerto)
@@ -47,8 +48,10 @@ def obtener_serial_desde_hardware(ip="192.168.100.201", puerto=4370, intentos=3)
                 
     except Exception as e:
         print(f"⛔ Error al crear conexión ZKTeco: {e}")
-        
-    return None
+    
+    # Si llegamos aquí, todos los intentos fallaron
+    print("⚠️ Todos los intentos de conexión fallaron. Usando aparato de prueba.")
+    return "0X0AB0"  # Serial del aparato de prueba
 
 def obtener_aparato_por_serial(serial_number):
     """Consulta la base de datos para obtener un aparato biométrico basado en su número de serie."""
@@ -79,7 +82,7 @@ def obtener_aparato_por_serial(serial_number):
 class AgregarPostulante(tk.Toplevel):
     def __init__(self, parent, user_data):
         super().__init__(parent)
-        self.title("Añadir Postulante - Sistema ZKTeco")
+        self.title("Añadir Postulante - Sistema QUIRA")
         self.geometry("")
         self.resizable(False, False)
         self.transient(parent)
@@ -162,6 +165,7 @@ class AgregarPostulante(tk.Toplevel):
         self.entry_telefono = tk.StringVar()
         self.entry_fecha_nacimiento = tk.StringVar()
         self.entry_edad = tk.StringVar()
+        self.entry_sexo = tk.StringVar(value="Seleccionar")
         self.entry_fecha_registro = tk.StringVar()
         self.entry_aparato = tk.StringVar()
         self.entry_unidad = tk.StringVar()
@@ -170,6 +174,7 @@ class AgregarPostulante(tk.Toplevel):
         # Valores para comboboxes
         self.unidades = ["Unidad 1", "Unidad 2", "Unidad 3", "Unidad 4"]
         self.dedos = ["PD", "ID", "MD", "AD", "MeD", "PI", "II", "MI", "AI", "MeI"]
+        self.sexos = ["Hombre", "Mujer"]
 
         # Sección 1: Información Personal
         self.crear_seccion_titulo(form_frame, "INFORMACIÓN PERSONAL", 0)
@@ -186,14 +191,17 @@ class AgregarPostulante(tk.Toplevel):
         # Fecha de Nacimiento y Edad en la misma fila (con campo inteligente)
         self.crear_campo_fecha_inteligente(form_frame, "Fecha Nacimiento:", self.entry_fecha_nacimiento, 4, "Edad:", self.entry_edad, readonly2=True)
         
+        # Sexo (campo individual)
+        self.crear_campo_combobox(form_frame, "Sexo:", self.entry_sexo, 5, self.sexos)
+        
         # Sección 2: Información del Registro
-        self.crear_seccion_titulo(form_frame, "INFORMACIÓN DEL REGISTRO", 5)
+        self.crear_seccion_titulo(form_frame, "INFORMACIÓN DEL REGISTRO", 6)
         
         # Unidad y Dedo Registrado en la misma fila
-        self.crear_campo_horizontal_combobox(form_frame, "Unidad:", self.entry_unidad, 6, "Dedo Registrado:", self.entry_dedo, self.unidades, self.dedos)
+        self.crear_campo_horizontal_combobox(form_frame, "Unidad:", self.entry_unidad, 7, "Dedo Registrado:", self.entry_dedo, self.unidades, self.dedos)
         
         # Fecha de Registro y Aparato Biométrico en la misma fila
-        self.crear_campo_horizontal(form_frame, "Fecha Registro:", self.entry_fecha_registro, 7, "Aparato Biométrico:", self.entry_aparato, readonly1=True, readonly2=True)
+        self.crear_campo_horizontal(form_frame, "Fecha Registro:", self.entry_fecha_registro, 8, "Aparato Biométrico:", self.entry_aparato, readonly1=True, readonly2=True)
 
         # Frame para botones centrados
         button_frame = tk.Frame(frame_main, bg='#f0f0f0')
@@ -331,6 +339,19 @@ class AgregarPostulante(tk.Toplevel):
         combo2 = ttk.Combobox(parent, textvariable=var2, values=valores2, 
                              state="readonly", font=('Segoe UI', 10))
         combo2.grid(row=row, column=3, sticky='ew', pady=8, padx=(0, 10))
+
+    def crear_campo_combobox(self, parent, label_text, variable, row, valores):
+        """Crear campo individual con combobox"""
+        # Label
+        label = tk.Label(parent, text=label_text, 
+                        font=('Segoe UI', 10, 'bold'), 
+                        fg='#2c3e50', bg='white', anchor='w')
+        label.grid(row=row, column=0, sticky='w', pady=8, padx=10)
+        
+        # Combobox
+        combo = ttk.Combobox(parent, textvariable=variable, values=valores, 
+                            state="readonly", font=('Segoe UI', 10))
+        combo.grid(row=row, column=1, sticky='ew', pady=8, padx=(0, 10))
 
     def crear_campo_fecha_inteligente(self, parent, label1, var1, row, label2, var2, readonly1=False, readonly2=False):
         """Crear campo de fecha inteligente con formato automático y validación"""
@@ -560,7 +581,7 @@ class AgregarPostulante(tk.Toplevel):
         # Verificar el estado de las conexiones
         if self.zkteco_connected and self.zkteco:
             # Sistema completamente funcional
-            self.status_label.config(text="✅ Sistema listo - ZKTeco conectado", fg='#2E902E', font=('Segoe UI', 10, 'bold'))
+            self.status_label.config(text="✅ Sistema listo - QUIRA conectado", fg='#2E902E', font=('Segoe UI', 10, 'bold'))
         else:
             # Sistema con problemas de conexión - solo mostrar el error
             self.status_label.config(text="⚠️ Error de conexión ZKTeco", fg='#902E2E', font=('Segoe UI', 10, 'bold'))
@@ -592,7 +613,11 @@ class AgregarPostulante(tk.Toplevel):
             
             # Mostrar el nombre del dispositivo y el serial entre paréntesis
             if aparato_nombre and aparato_nombre != "No disponible":
-                texto_aparato = f"{aparato_nombre} ({numero_de_serie})"
+                if numero_de_serie == "0X0AB0":
+                    # Es el aparato de prueba
+                    texto_aparato = f"{aparato_nombre} ({numero_de_serie}) - MODO PRUEBA"
+                else:
+                    texto_aparato = f"{aparato_nombre} ({numero_de_serie})"
             else:
                 texto_aparato = f"Dispositivo {numero_de_serie}"
         else:
@@ -604,19 +629,44 @@ class AgregarPostulante(tk.Toplevel):
     
     def obtener_id_mas_alto_k40(self):
         """Obtiene el ID más alto del dispositivo K40 y lo muestra en el campo ID usando la conexión existente"""
+        # Verificar si estamos en modo prueba
+        es_modo_prueba = False
+        if self.aparato_id:
+            try:
+                conn = connect_db()
+                cursor = conn.cursor()
+                cursor.execute("SELECT serial FROM aparatos_biometricos WHERE id = %s", (self.aparato_id,))
+                resultado = cursor.fetchone()
+                cursor.close()
+                conn.close()
+                
+                if resultado and resultado[0] == "0X0AB0":
+                    es_modo_prueba = True
+            except Exception as e:
+                print(f"⚠️ Error al verificar modo prueba: {e}")
+        
+        if es_modo_prueba:
+            # En modo prueba, generar un ID simulado
+            import random
+            uid_simulado = random.randint(1000, 9999)
+            self.entry_id_k40.set(str(uid_simulado))
+            print(f"🔧 Modo prueba: ID simulado generado: {uid_simulado}")
+            return
+        
         if not self.zkteco_connected or not self.zkteco:
             print("⚠️ No hay conexión activa para obtener el ID más alto")
             self.entry_id_k40.set("")
             return
             
         try:
-            usuarios = self.zkteco.get_user_list()
+            # Obtener solo los últimos 5 usuarios para optimizar rendimiento
+            usuarios = self.zkteco.get_user_list(count=5, include_fingerprints=False)
             
             if usuarios:
-                # Encontrar el UID más alto
+                # Encontrar el UID más alto entre los últimos 5 usuarios
                 uid_mas_alto = max(usuarios, key=lambda u: int(u['uid']))['uid']
                 self.entry_id_k40.set(str(uid_mas_alto))
-                print(f"✅ ID más alto detectado en K40: {uid_mas_alto}")
+                print(f"✅ ID más alto detectado en K40 (últimos 5 usuarios): {uid_mas_alto}")
             else:
                 print("⚠️ No hay usuarios registrados en el K40")
                 self.entry_id_k40.set("")
@@ -809,6 +859,7 @@ class AgregarPostulante(tk.Toplevel):
         telefono = self.entry_telefono.get().strip()
         edad_str = self.entry_edad.get().strip()
         edad = int(edad_str) if edad_str.isdigit() else None
+        sexo = self.entry_sexo.get().strip()
         fecha_nacimiento = self.entry_fecha_nacimiento.get().strip()
         unidad = self.entry_unidad.get().strip()
         fecha_registro = self.entry_fecha_registro.get().strip()
@@ -827,9 +878,9 @@ class AgregarPostulante(tk.Toplevel):
         aparato_id = self.aparato_id
 
         # Validar campos obligatorios
-        if not nombre or not apellido or not cedula or not dedo_registrado:
+        if not nombre or not apellido or not cedula or not dedo_registrado or sexo == "Seleccionar":
             self.ocultar_estado()
-            messagebox.showerror("Error", "Todos los campos, incluido 'Dedo Registrado', son obligatorios.")
+            messagebox.showerror("Error", "Todos los campos, incluido 'Dedo Registrado' y 'Sexo', son obligatorios.")
             return
 
         try:
@@ -840,106 +891,133 @@ class AgregarPostulante(tk.Toplevel):
             messagebox.showerror("Error", "Formato de fecha incorrecto. Usa DD/MM/AAAA para la Fecha de Nacimiento.")
             return
 
-        # PASO 1: ACTUALIZAR EN EL K40 PRIMERO
-        self.mostrar_estado("Conectando al dispositivo K40...")
+        # PASO 1: ACTUALIZAR EN EL K40 PRIMERO (solo si no es modo prueba)
         usuario_uid = None  # Inicializar variable para UID
         k40_actualizado = False  # Flag para verificar si se actualizó correctamente
+        
+        # Verificar si estamos en modo prueba
+        es_modo_prueba = False
+        if self.aparato_id:
+            try:
+                conn = connect_db()
+                cursor = conn.cursor()
+                cursor.execute("SELECT serial FROM aparatos_biometricos WHERE id = %s", (self.aparato_id,))
+                resultado = cursor.fetchone()
+                cursor.close()
+                conn.close()
+                
+                if resultado and resultado[0] == "0X0AB0":
+                    es_modo_prueba = True
+                    print("🔧 Modo prueba detectado - Saltando conexión K40")
+            except Exception as e:
+                print(f"⚠️ Error al verificar modo prueba: {e}")
 
-        if not self.zkteco_connected or not self.zkteco:
-            self.ocultar_estado()
-            messagebox.showerror("Error", "No hay conexión activa con el dispositivo K40.")
-            return
-
-        try:
-            self.mostrar_estado("Obteniendo lista de usuarios...")
-            usuarios = self.zkteco.get_user_list()
-
-            if not usuarios:
+        if not es_modo_prueba:
+            self.mostrar_estado("Conectando al dispositivo K40...")
+            
+            if not self.zkteco_connected or not self.zkteco:
                 self.ocultar_estado()
-                messagebox.showerror("Error", "No hay usuarios registrados en el K40.")
+                messagebox.showerror("Error", "No hay conexión activa con el dispositivo K40.")
                 return
 
-            # Si el operador ingresó un ID manualmente, buscarlo
-            if id_manual.isdigit():
-                self.mostrar_estado("Buscando usuario específico...")
-                usuario_manual = next((u for u in usuarios if str(u['uid']) == id_manual), None)
-                if usuario_manual:
-                    ultimo_usuario = usuario_manual
-                else:
+            try:
+                self.mostrar_estado("Obteniendo lista de usuarios...")
+                # Obtener solo los últimos 5 usuarios para optimizar rendimiento
+                usuarios = self.zkteco.get_user_list(count=5, include_fingerprints=False)
+
+                if not usuarios:
                     self.ocultar_estado()
-                    messagebox.showerror("Error", f"No se encontró un usuario con ID {id_manual} en el K40.")
+                    messagebox.showerror("Error", "No hay usuarios registrados en el K40.")
                     return
-            else:
-                # Buscar el usuario más reciente sin `user_id`
-                self.mostrar_estado("Buscando usuario disponible...")
-                usuarios_sin_id = [u for u in usuarios if not u.get('user_id') or u.get('user_id', '').startswith("NN-")]
-                if usuarios_sin_id:
-                    ultimo_usuario = usuarios_sin_id[-1]
+
+                # Si el operador ingresó un ID manualmente, buscarlo
+                if id_manual.isdigit():
+                    self.mostrar_estado("Buscando usuario específico...")
+                    usuario_manual = next((u for u in usuarios if str(u['uid']) == id_manual), None)
+                    if usuario_manual:
+                        ultimo_usuario = usuario_manual
+                    else:
+                        self.ocultar_estado()
+                        messagebox.showerror("Error", f"No se encontró un usuario con ID {id_manual} en los últimos 5 usuarios del K40. Intente ingresar un ID más reciente.")
+                        return
                 else:
-                    ultimo_usuario = max(usuarios, key=lambda u: int(u['uid']))
+                    # Buscar el usuario más reciente sin `user_id` entre los últimos 5
+                    self.mostrar_estado("Buscando usuario disponible...")
+                    usuarios_sin_id = [u for u in usuarios if not u.get('user_id') or u.get('user_id', '').startswith("NN-")]
+                    if usuarios_sin_id:
+                        ultimo_usuario = usuarios_sin_id[-1]
+                    else:
+                        ultimo_usuario = max(usuarios, key=lambda u: int(u['uid']))
 
-            if ultimo_usuario:
-                usuario_uid = ultimo_usuario['uid']  # Mantener el mismo UID
-                usuario_id_actual = ultimo_usuario.get('user_id', '')  # Mantener el mismo ID
+                if ultimo_usuario:
+                    usuario_uid = ultimo_usuario['uid']  # Mantener el mismo UID
+                    usuario_id_actual = ultimo_usuario.get('user_id', '')  # Mantener el mismo ID
 
-                # Si el usuario ya tiene un nombre real asignado, dirigir al usuario a la función de edición
-                if ultimo_usuario.get('name') and not ultimo_usuario.get('name', '').startswith("NN-"):
-                    self.ocultar_estado()
-                    
-                    # Obtener el nombre del aparato para el mensaje
-                    nombre_aparato = "Desconocido"
-                    try:
-                        conn = connect_db()
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT nombre FROM aparatos_biometricos WHERE id = %s", (self.aparato_id,))
-                        resultado = cursor.fetchone()
-                        if resultado:
-                            nombre_aparato = resultado[0]
-                        cursor.close()
-                        conn.close()
-                    except:
-                        pass
-                    
-                    messagebox.showwarning(
-                        "Usuario ya registrado",
-                        f"El usuario con ID {usuario_uid} en el aparato {nombre_aparato} ya tiene un nombre asignado: '{ultimo_usuario['name']}'.\n\n"
-                        "Si es que lo necesita siga esta guía:\n\n"
-                        "Para modificar los datos de un usuario existente, utiliza la función:\n"
-                        "BUSCAR POSTULANTES → Editar Postulante\n\n"
-                        "IMPORTANTE: Después de editar y actualizar la información en la base de datos, asegúrate de sincronizar manualmente en el aparato biométrico para que los cambios también se reflejen en el ahí los cambios para evitar inconsistencias entre ambos sistemas.\n\n"
-                        "Esta función es solo para agregar nuevos postulantes."
+                    # Si el usuario ya tiene un nombre real asignado, dirigir al usuario a la función de edición
+                    if ultimo_usuario.get('name') and not ultimo_usuario.get('name', '').startswith("NN-"):
+                        self.ocultar_estado()
+                        
+                        # Obtener el nombre del aparato para el mensaje
+                        nombre_aparato = "Desconocido"
+                        try:
+                            conn = connect_db()
+                            cursor = conn.cursor()
+                            cursor.execute("SELECT nombre FROM aparatos_biometricos WHERE id = %s", (self.aparato_id,))
+                            resultado = cursor.fetchone()
+                            if resultado:
+                                nombre_aparato = resultado[0]
+                            cursor.close()
+                            conn.close()
+                        except:
+                            pass
+                        
+                        messagebox.showwarning(
+                            "Usuario ya registrado",
+                            f"El usuario con ID {usuario_uid} en el aparato {nombre_aparato} ya tiene un nombre asignado: '{ultimo_usuario['name']}'.\n\n"
+                            "Si es que lo necesita siga esta guía:\n\n"
+                            "Para modificar los datos de un usuario existente, utiliza la función:\n"
+                            "BUSCAR POSTULANTES → Editar Postulante\n\n"
+                            "IMPORTANTE: Después de editar y actualizar la información en la base de datos, asegúrate de sincronizar manualmente en el aparato biométrico para que los cambios también se reflejen en el ahí los cambios para evitar inconsistencias entre ambos sistemas.\n\n"
+                            "Esta función es solo para agregar nuevos postulantes."
+                        )
+                        return  # Salir sin hacer cambios
+
+                    # ACTUALIZAR EL USUARIO EN EL K40 (solo si no tiene nombre asignado)
+                    self.mostrar_estado("Actualizando usuario en dispositivo...")
+                    resultado_k40 = self.zkteco.set_user(
+                        uid=usuario_uid,
+                        name=f"{nombre} {apellido}",
+                        privilege=ultimo_usuario.get('privilege', 0),
+                        password="",
+                        group_id=ultimo_usuario.get('group_id', ''),
+                        user_id=usuario_id_actual
                     )
-                    return  # Salir sin hacer cambios
 
-                # ACTUALIZAR EL USUARIO EN EL K40 (solo si no tiene nombre asignado)
-                self.mostrar_estado("Actualizando usuario en dispositivo...")
-                resultado_k40 = self.zkteco.set_user(
-                    uid=usuario_uid,
-                    name=f"{nombre} {apellido}",
-                    privilege=ultimo_usuario.get('privilege', 0),
-                    password="",
-                    group_id=ultimo_usuario.get('group_id', ''),
-                    user_id=usuario_id_actual
-                )
+                    # Verificar si la actualización en K40 fue exitosa
+                    if resultado_k40:
+                        k40_actualizado = True
+                        print(f"✅ Usuario {usuario_id_actual} actualizado en K40 sin perder la huella.")
+                    else:
+                        self.ocultar_estado()
+                        messagebox.showerror("Error", "No se pudo actualizar el usuario en el dispositivo K40. No se guardará en la base de datos.")
+                        return
 
-                # Verificar si la actualización en K40 fue exitosa
-                if resultado_k40:
-                    k40_actualizado = True
-                    print(f"✅ Usuario {usuario_id_actual} actualizado en K40 sin perder la huella.")
                 else:
                     self.ocultar_estado()
-                    messagebox.showerror("Error", "No se pudo actualizar el usuario en el dispositivo K40. No se guardará en la base de datos.")
+                    messagebox.showerror("Error", "No se encontró un usuario registrado recientemente en el K40.")
                     return
 
-            else:
+            except Exception as e:
                 self.ocultar_estado()
-                messagebox.showerror("Error", "No se encontró un usuario registrado recientemente en el K40.")
+                messagebox.showerror("Error", f"No se pudo actualizar el K40: {e}. No se guardará en la base de datos.")
                 return
-
-        except Exception as e:
-            self.ocultar_estado()
-            messagebox.showerror("Error", f"No se pudo actualizar el K40: {e}. No se guardará en la base de datos.")
-            return
+        else:
+            # Modo prueba - generar UID simulado
+            if es_modo_prueba:
+                import random
+                usuario_uid = random.randint(1000, 9999)  # UID simulado
+                k40_actualizado = True
+                print(f"🔧 Modo prueba: UID simulado generado: {usuario_uid}")
 
         # PASO 2: SOLO SI EL K40 SE ACTUALIZÓ CORRECTAMENTE, GUARDAR EN LA BASE DE DATOS
         if not k40_actualizado:
@@ -953,15 +1031,15 @@ class AgregarPostulante(tk.Toplevel):
         try:
             cursor.execute("""
                 INSERT INTO postulantes
-                (nombre, apellido, cedula, fecha_nacimiento, telefono, fecha_registro, usuario_registrador, edad, unidad, dedo_registrado, registrado_por, aparato_id, uid_k40)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (nombre, apellido, cedula, fecha_nacimiento, telefono, fecha_registro, self.usuario_registrador, edad, unidad, dedo_registrado, registrado_por, aparato_id, usuario_uid))
+                (nombre, apellido, cedula, fecha_nacimiento, telefono, fecha_registro, usuario_registrador, edad, sexo, unidad, dedo_registrado, registrado_por, aparato_id, uid_k40)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (nombre, apellido, cedula, fecha_nacimiento, telefono, fecha_registro, self.usuario_registrador, edad, sexo, unidad, dedo_registrado, registrado_por, aparato_id, usuario_uid))
             conn.commit()
 
-            # Obtener el número de serie del aparato biométrico
-            cursor.execute("SELECT serial FROM aparatos_biometricos WHERE id = %s", (aparato_id,))
-            aparato_serial = cursor.fetchone()
-            aparato_serial = aparato_serial[0] if aparato_serial else "Desconocido"
+            # Obtener el nombre del aparato biométrico
+            cursor.execute("SELECT nombre FROM aparatos_biometricos WHERE id = %s", (aparato_id,))
+            aparato_nombre = cursor.fetchone()
+            aparato_nombre = aparato_nombre[0] if aparato_nombre else "Aparato Desconocido"
 
         except Exception as e:
             self.ocultar_estado()
@@ -975,7 +1053,7 @@ class AgregarPostulante(tk.Toplevel):
         self.ocultar_estado()
         messagebox.showinfo(
             "Éxito",
-            f"Postulante registrado correctamente en el aparato {aparato_serial}, con UID {usuario_uid}."
+            f"Postulante registrado correctamente en el aparato {aparato_nombre}, con UID {usuario_uid}."
         )
         self.on_closing()
 

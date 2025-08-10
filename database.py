@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Módulo de base de datos para el sistema integrado ZKTeco + Criminalística
+Módulo de base de datos para Sistema QUIRA
 """
 
 import psycopg2
@@ -301,15 +301,41 @@ def buscar_postulante(cedula=None, nombre=None):
             search_term = f"%{cedula}%"
             cursor.execute(query, (search_term,))
         elif nombre:
-            query = sql.SQL("""
-                SELECT id, nombre, apellido, cedula, fecha_nacimiento, 
-                       telefono, fecha_registro, usuario_registrador, registrado_por, aparato_id, dedo_registrado,
-                       usuario_ultima_edicion, fecha_ultima_edicion
-                FROM postulantes 
-                WHERE nombre ILIKE %s OR apellido ILIKE %s
-            """)
-            search_term = f"%{nombre}%"
-            cursor.execute(query, (search_term, search_term))
+            # Si el término de búsqueda contiene espacios, dividirlo y buscar cada palabra
+            search_terms = nombre.strip().split()
+            
+            if len(search_terms) > 1:
+                # Búsqueda con múltiples palabras
+                conditions = []
+                params = []
+                
+                for term in search_terms:
+                    if term.strip():  # Ignorar términos vacíos
+                        conditions.append("(nombre ILIKE %s OR apellido ILIKE %s)")
+                        params.extend([f"%{term}%", f"%{term}%"])
+                
+                if conditions:
+                    query = sql.SQL(f"""
+                        SELECT id, nombre, apellido, cedula, fecha_nacimiento, 
+                               telefono, fecha_registro, usuario_registrador, registrado_por, aparato_id, dedo_registrado,
+                               usuario_ultima_edicion, fecha_ultima_edicion
+                        FROM postulantes 
+                        WHERE {' AND '.join(conditions)}
+                    """)
+                    cursor.execute(query, params)
+                else:
+                    return []
+            else:
+                # Búsqueda con una sola palabra (comportamiento original)
+                query = sql.SQL("""
+                    SELECT id, nombre, apellido, cedula, fecha_nacimiento, 
+                           telefono, fecha_registro, usuario_registrador, registrado_por, aparato_id, dedo_registrado,
+                           usuario_ultima_edicion, fecha_ultima_edicion
+                    FROM postulantes 
+                    WHERE nombre ILIKE %s OR apellido ILIKE %s
+                """)
+                search_term = f"%{nombre}%"
+                cursor.execute(query, (search_term, search_term))
         else:
             return []
         
@@ -792,7 +818,7 @@ def update_postulantes_table_structure(cursor, conn):
             SELECT column_name 
             FROM information_schema.columns 
             WHERE table_name = 'postulantes' 
-            AND column_name IN ('usuario_ultima_edicion', 'fecha_ultima_edicion')
+            AND column_name IN ('usuario_ultima_edicion', 'fecha_ultima_edicion', 'sexo')
         """)
         existing_columns = [row[0] for row in cursor.fetchall()]
         
@@ -810,6 +836,13 @@ def update_postulantes_table_structure(cursor, conn):
                 ADD COLUMN fecha_ultima_edicion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             """)
             logger.info("✅ Campo fecha_ultima_edicion agregado")
+            
+        if 'sexo' not in existing_columns:
+            cursor.execute("""
+                ALTER TABLE postulantes 
+                ADD COLUMN sexo VARCHAR(10)
+            """)
+            logger.info("✅ Campo sexo agregado")
             
         conn.commit()
         

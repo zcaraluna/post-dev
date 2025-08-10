@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Menú principal integrado para ZKTeco + Criminalística
+Menú principal integrado para Sistema QUIRA
 """
 
 import tkinter as tk
@@ -252,13 +252,14 @@ class MenuPrincipal(tk.Frame):
     
     def configuracion_sistema(self):
         """Abrir configuración del sistema"""
-        messagebox.showinfo("Configuración", "Función de configuración en desarrollo")
+        from sistema_respaldo import InterfazRespaldo
+        InterfazRespaldo(self.parent)
     
     def acerca_de(self):
         """Mostrar información sobre el sistema"""
         messagebox.showinfo(
             "Acerca de",
-            "Sistema ZKTeco + Criminalística\n\n"
+            "Sistema: QUIRA\n\n"
             "Versión: 1.0\n"
             "Desarrollado para el Instituto de Criminalística\n"
             "Policía Nacional del Paraguay\n\n"
@@ -280,14 +281,22 @@ class MenuPrincipal(tk.Frame):
 def main():
     """Función principal para probar el menú"""
     root = tk.Tk()
-    root.title("Sistema ZKTeco + Criminalística")
+    root.title("Sistema QUIRA")
+    
+    # Configurar icono de la ventana (256 píxeles)
+    try:
+        from icon_utils import set_large_256_icon
+        if set_large_256_icon(root):
+            print("✅ Icono de 256px configurado correctamente en menú principal")
+    except ImportError:
+        print("⚠️ No se pudo importar icon_utils")
     
     # Usuario de prueba
     user_data = {
         'id': 1,
-        'nombre': 'Admin',
-        'apellido': 'General',
-        'grado': 'Comisario',
+        'nombre': 'Guillermo Andres',
+        'apellido': 'Recalde Valdez',
+        'grado': 'Oficial Segundo',
         'rol': 'SUPERADMIN'
     }
     

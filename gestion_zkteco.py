@@ -252,7 +252,7 @@ class GestionZKTeco(tk.Toplevel):
         advanced_frame.columnconfigure(1, weight=1)
         
         # Configurar log inicial
-        self.log("Sistema de gestión ZKTeco iniciado")
+        self.log("Sistema de gestión QUIRA iniciado")
         
     def center_window(self):
         """Centrar la ventana"""

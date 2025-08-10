@@ -1,0 +1,15 @@
+{
+    "directorio_respaldo": "./backups",
+    "respaldo_diario": true,
+    "respaldo_semanal": true,
+    "respaldo_mensual": true,
+    "retener_diarios": 7,
+    "retener_semanales": 4,
+    "retener_mensuales": 12,
+    "comprimir_respaldos": true,
+    "verificar_integridad": true,
+    "dispositivos_usb": [],
+    "incluir_zkteco": true,
+    "incluir_logs": true,
+    "hora_respaldo_automatico": "14:30"
+}

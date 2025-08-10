@@ -7,7 +7,7 @@ Uso: python simple_connector.py [IP] [PUERTO]
 
 import sys
 import argparse
-from zkteco_connector import ZKTecoK40, test_connection
+from zkteco_connector_v2 import ZKTecoK40V2 as ZKTecoK40, test_connection
 
 def main():
     """Función principal del script"""
@@ -68,7 +68,7 @@ def main():
             print(f"{'ID':<6} {'Nombre':<30} {'Rol':<8} {'Grupo':<8} {'Huellas':<8} {'Estado':<8}")
             print("-" * 80)
             
-            users = device.get_user_list(0, min(user_count, 100))  # Máximo 100 usuarios
+            users = device.get_user_list(0, min(user_count, 3000), include_fingerprints=False)  # Máximo 3000 usuarios sin huellas
             for user in users:
                 status = "Activo" if user['status'] == 1 else "Inactivo"
                 print(f"{user['user_id']:<6} {user['name']:<30} {user['role']:<8} "

@@ -21,7 +21,7 @@ except:
 class EditarPostulante(tk.Toplevel):
     def __init__(self, parent, user_data, postulante_id):
         super().__init__(parent)
-        self.title("Editar Postulante - Sistema ZKTeco")
+        self.title("Editar Postulante - Sistema QUIRA")
         self.geometry("")
         self.resizable(False, False)
         self.transient(parent)
