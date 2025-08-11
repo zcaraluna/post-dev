@@ -18,6 +18,8 @@ class GestionZKTeco(tk.Toplevel):
         self.user_data = user_data
         self.zkteco_device = None
         self.connected = False
+        self._watchdog_stop = False
+        self._watchdog_thread = None
         
         self.title("Gestión ZKTeco K40")
         self.geometry("720x720")
@@ -106,6 +108,9 @@ class GestionZKTeco(tk.Toplevel):
         except:
             pass
         
+        # Detener watchdog antes de cerrar
+        self.stop_watchdog()
+
         # Desconectar dispositivo si está conectado
         if self.connected and self.zkteco_device:
             try:
@@ -318,6 +323,9 @@ class GestionZKTeco(tk.Toplevel):
         
         # Actualizar información del dispositivo
         self.update_device_info()
+
+        # Iniciar watchdog de reconexión automática
+        self.start_watchdog()
         
     def connection_failed(self):
         """Manejar fallo de conexión"""
@@ -339,6 +347,8 @@ class GestionZKTeco(tk.Toplevel):
         
     def disconnect_device(self):
         """Desconectar dispositivo"""
+        # Detener watchdog primero
+        self.stop_watchdog()
         if self.zkteco_device:
             try:
                 self.zkteco_device.disconnect()
@@ -356,6 +366,64 @@ class GestionZKTeco(tk.Toplevel):
         for var in self.device_info.values():
             var.set("No disponible")
             
+    def start_watchdog(self, interval_s: int = 30):
+        """Iniciar un hilo watchdog que verifica la conexión y reintenta con backoff."""
+        if self._watchdog_thread and self._watchdog_thread.is_alive():
+            return
+        self._watchdog_stop = False
+
+        def loop():
+            import time
+            backoff_seconds = 3
+            max_backoff = 60
+            while not self._watchdog_stop:
+                try:
+                    # Si no hay dispositivo inicializado, esperar
+                    if not self.zkteco_device:
+                        time.sleep(interval_s)
+                        continue
+
+                    # Si está marcado como conectado, validar vida
+                    if self.connected and self.zkteco_device.is_alive():
+                        backoff_seconds = 3
+                        time.sleep(interval_s)
+                        continue
+
+                    # En este punto, no está vivo. Marcar UI y reintentar
+                    self.after(0, lambda: self.status_label.config(text="❌ Desconectado (reintentando)", foreground='#e67e22'))
+                    self.after(0, lambda: self.connect_btn.config(state='disabled'))
+                    self.after(0, lambda: self.disconnect_btn.config(state='normal'))
+
+                    # Intentar reconectar
+                    if self.zkteco_device.reconnect():
+                        self.connected = True
+                        backoff_seconds = 3
+                        self.after(0, lambda: self.status_label.config(text="✅ Conectado", foreground='#27ae60'))
+                        # Refrescar info tras reconexión
+                        self.after(0, self.update_device_info)
+                        time.sleep(interval_s)
+                    else:
+                        self.connected = False
+                        # Aumentar backoff y esperar
+                        time.sleep(backoff_seconds)
+                        backoff_seconds = min(backoff_seconds * 2, max_backoff)
+
+                except Exception:
+                    # Cualquier excepción: esperar con backoff y seguir
+                    time.sleep(backoff_seconds)
+                    backoff_seconds = min(backoff_seconds * 2, max_backoff)
+
+        import threading as _th
+        self._watchdog_thread = _th.Thread(target=loop, daemon=True)
+        self._watchdog_thread.start()
+
+    def stop_watchdog(self):
+        """Detener el hilo watchdog si está corriendo."""
+        self._watchdog_stop = True
+        thr = self._watchdog_thread
+        self._watchdog_thread = None
+        # No join() para no bloquear UI; es daemon
+
 
         
     def update_device_info(self):

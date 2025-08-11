@@ -130,11 +130,34 @@ class GestionUsuarios(tk.Toplevel):
         """Cargar y mostrar imagen institucional"""
         try:
             from PIL import Image, ImageTk
+            import sys
             
-            # Ruta de la imagen
-            image_path = os.path.join(os.path.dirname(__file__), 'instituto.png')
+            # Función para obtener la ruta base correcta
+            def get_base_path():
+                if getattr(sys, 'frozen', False):
+                    # Ejecutando desde PyInstaller
+                    return os.path.dirname(sys.executable)
+                else:
+                    # Ejecutando desde script
+                    return os.path.dirname(os.path.abspath(__file__))
             
-            if os.path.exists(image_path):
+            base_path = get_base_path()
+            
+            # Lista de posibles rutas para la imagen
+            posibles_rutas = [
+                os.path.join(base_path, "instituto.png"),
+                os.path.join(base_path, "_internal", "instituto.png"),  # En _internal (PyInstaller)
+                os.path.join(os.path.dirname(__file__), 'instituto.png'),  # Ruta original
+                "instituto.png",  # Ruta relativa
+            ]
+            
+            image_path = None
+            for ruta in posibles_rutas:
+                if os.path.exists(ruta):
+                    image_path = ruta
+                    break
+            
+            if image_path:
                 # Cargar imagen
                 image = Image.open(image_path)
                 
@@ -156,6 +179,7 @@ class GestionUsuarios(tk.Toplevel):
                 
         except Exception as e:
             # Si hay error, simplemente continuar sin imagen
+            print(f"⚠️ Error cargando imagen institucional: {e}")
             pass
         
     def create_table(self, parent):

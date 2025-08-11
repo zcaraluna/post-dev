@@ -54,19 +54,46 @@ class ListaPostulantes(tk.Toplevel):
     def load_institutional_image(self):
         """Cargar imagen institucional"""
         try:
-            image_path = "quira.png"
-            if os.path.exists(image_path):
+            import sys
+            
+            # Función para obtener la ruta base correcta
+            def get_base_path():
+                if getattr(sys, 'frozen', False):
+                    # Ejecutando desde PyInstaller
+                    return os.path.dirname(sys.executable)
+                else:
+                    # Ejecutando desde script
+                    return os.path.dirname(os.path.abspath(__file__))
+            
+            base_path = get_base_path()
+            
+            # Lista de posibles rutas para la imagen
+            posibles_rutas = [
+                os.path.join(base_path, "quira.png"),
+                os.path.join(base_path, "_internal", "quira.png"),  # En _internal (PyInstaller)
+                "quira.png",  # Ruta relativa
+            ]
+            
+            image_path = None
+            for ruta in posibles_rutas:
+                if os.path.exists(ruta):
+                    image_path = ruta
+                    break
+            
+            if image_path:
                 self.institutional_image = Image.open(image_path)
-                # Redimensionar manteniendo proporción, máximo 60px de altura
+                # Redimensionar manteniendo proporción, máximo 160px de altura
                 max_height = 160
                 ratio = max_height / self.institutional_image.height
                 new_width = int(self.institutional_image.width * ratio)
                 self.institutional_image = self.institutional_image.resize((new_width, max_height), Image.Resampling.LANCZOS)
                 self.institutional_image_tk = ImageTk.PhotoImage(self.institutional_image)
+                print(f"✅ Imagen institucional cargada desde: {image_path}")
             else:
                 self.institutional_image_tk = None
+                print("⚠️ No se encontró la imagen institucional")
         except Exception as e:
-            print(f"Error al cargar imagen institucional: {e}")
+            print(f"❌ Error al cargar imagen institucional: {e}")
             self.institutional_image_tk = None
         
     def setup_ui(self):
@@ -400,21 +427,28 @@ class ListaPostulantes(tk.Toplevel):
             dedos = [row[0] for row in cursor.fetchall()]
             self.dedo_combobox['values'] = [''] + dedos
             
-            # Obtener aparatos únicos
+            # Obtener aparatos únicos y crear mapeo aparato_id -> nombre
             cursor.execute("""
-                SELECT DISTINCT a.nombre 
+                SELECT DISTINCT a.id, a.nombre 
                 FROM aparatos_biometricos a 
                 INNER JOIN postulantes p ON a.id = p.aparato_id 
                 WHERE a.nombre IS NOT NULL AND a.nombre != ''
                 ORDER BY a.nombre
             """)
-            aparatos = [row[0] for row in cursor.fetchall()]
+            aparatos_data = cursor.fetchall()
+            
+            # Crear lista de nombres para el combobox
+            aparatos = [row[1] for row in aparatos_data]
             self.aparato_combobox['values'] = [''] + aparatos
+            
+            # Crear diccionario de mapeo aparato_id -> nombre
+            self.aparato_id_to_name = {row[0]: row[1] for row in aparatos_data}
             
             conn.close()
             
         except Exception as e:
             print(f"Error al cargar opciones de filtro: {e}")
+            self.aparato_id_to_name = {}
         
     def apply_filters(self):
         """Aplicar filtros a los postulantes"""
@@ -461,20 +495,12 @@ class ListaPostulantes(tk.Toplevel):
                 if self.filter_dedo.get() and self.filter_dedo.get() != postulante[13]:
                     continue
                     
-                # Filtro por aparato
+                # Filtro por aparato (optimizado)
                 if self.filter_aparato.get():
-                    # Obtener nombre del aparato
-                    try:
-                        conn = connect_db()
-                        if conn:
-                            cursor = conn.cursor()
-                            cursor.execute("SELECT nombre FROM aparatos_biometricos WHERE id = %s", (postulante[15],))
-                            aparato_nombre = cursor.fetchone()
-                            conn.close()
-                            
-                            if not aparato_nombre or aparato_nombre[0] != self.filter_aparato.get():
-                                continue
-                    except:
+                    aparato_id = postulante[15]  # aparato_id está en la posición 15
+                    aparato_nombre = self.aparato_id_to_name.get(aparato_id)
+                    
+                    if not aparato_nombre or aparato_nombre != self.filter_aparato.get():
                         continue
                 
                 filtered.append(postulante)

@@ -27,8 +27,8 @@ def connect_db():
         conn = psycopg2.connect(
             dbname="sistema_postulantes",
             user="postgres",
-            password="admin123",  # Contraseña correcta
-            host="localhost",
+            password="decfespa67",  # Contraseña del servidor remoto
+            host="decfespaxsilco.ddns.net",
             port="5432"
         )
         return conn
@@ -166,14 +166,13 @@ def create_default_admin():
             query = sql.SQL("""
                 INSERT INTO usuarios (usuario, contrasena, rol, nombre, apellido, 
                                     grado, cedula, numero_credencial, telefono, 
-                                    correo, primer_inicio) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    primer_inicio) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """)
             
             cursor.execute(query, (
                 "admin", hashed_password, "SUPERADMIN", "Admin", "General",
-                "Comisario", "00000000", "CRED-ADMIN", "0000000000",
-                "admin@example.com", True
+                "Comisario", "00000000", "CRED-ADMIN", "0000000000", True
             ))
             
             conn.commit()
@@ -243,11 +242,40 @@ def agregar_postulante(postulante_data):
             
         cursor = conn.cursor()
         
+        # Obtener el nombre completo del usuario registrador
+        nombre_registrador = "Desconocido"
+        
+        # Opción 1: Usar el nombre proporcionado directamente (más confiable)
+        if postulante_data.get('nombre_registrador'):
+            nombre_registrador = postulante_data['nombre_registrador']
+            logger.info(f"✅ Usando nombre proporcionado: {nombre_registrador}")
+        
+        # Opción 2: Buscar por ID como fallback
+        elif postulante_data.get('usuario_registrador'):
+            logger.info(f"🔍 Buscando usuario registrador ID: {postulante_data['usuario_registrador']}")
+            cursor.execute("""
+                SELECT grado, nombre, apellido FROM usuarios 
+                WHERE id = %s
+            """, (postulante_data['usuario_registrador'],))
+            
+            usuario_data = cursor.fetchone()
+            if usuario_data:
+                grado = usuario_data[0] or ""
+                nombre = usuario_data[1] or ""
+                apellido = usuario_data[2] or ""
+                nombre_registrador = f"{grado} {nombre} {apellido}".strip()
+                logger.info(f"✅ Usuario encontrado por ID: {nombre_registrador}")
+            else:
+                logger.warning(f"⚠️ Usuario con ID {postulante_data['usuario_registrador']} no encontrado en la base de datos")
+        else:
+            logger.warning("⚠️ No se proporcionó usuario_registrador ni nombre_registrador en los datos")
+        
         query = sql.SQL("""
             INSERT INTO postulantes (
                 nombre, apellido, cedula, fecha_nacimiento, telefono, 
-                fecha_registro, usuario_registrador, id_k40
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                fecha_registro, usuario_registrador, registrado_por, edad, sexo, unidad, 
+                dedo_registrado, aparato_id, uid_k40
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """)
         
         cursor.execute(query, (
@@ -258,11 +286,17 @@ def agregar_postulante(postulante_data):
             postulante_data['telefono'],
             postulante_data['fecha_registro'],
             postulante_data['usuario_registrador'],
-            postulante_data.get('id_k40')
+            nombre_registrador,
+            postulante_data.get('edad'),
+            postulante_data.get('sexo'),
+            postulante_data.get('unidad'),
+            postulante_data.get('dedo_registrado'),
+            postulante_data.get('aparato_id'),
+            postulante_data.get('uid_k40')
         ))
         
         conn.commit()
-        logger.info(f"Postulante agregado: {postulante_data['nombre']} {postulante_data['apellido']}")
+        logger.info(f"Postulante agregado: {postulante_data['nombre']} {postulante_data['apellido']} por {nombre_registrador}")
         return True
         
     except Exception as e:
@@ -274,7 +308,7 @@ def agregar_postulante(postulante_data):
 
 def buscar_postulante(cedula=None, nombre=None):
     """
-    Buscar postulante por cédula o nombre
+    Buscar postulante por cédula o nombre (OPTIMIZADO)
     
     Args:
         cedula (str): Número de cédula
@@ -291,17 +325,27 @@ def buscar_postulante(cedula=None, nombre=None):
         cursor = conn.cursor()
         
         if cedula:
+            # Búsqueda optimizada por cédula con ordenamiento por relevancia (case-insensitive)
             query = sql.SQL("""
                 SELECT id, nombre, apellido, cedula, fecha_nacimiento, 
                        telefono, fecha_registro, usuario_registrador, registrado_por, aparato_id, dedo_registrado,
                        usuario_ultima_edicion, fecha_ultima_edicion
                 FROM postulantes 
-                WHERE cedula ILIKE %s
+                WHERE LOWER(CAST(cedula AS TEXT)) LIKE LOWER(%s)
+                ORDER BY 
+                    CASE 
+                        WHEN LOWER(CAST(cedula AS TEXT)) = LOWER(%s) THEN 1  -- Coincidencia exacta
+                        WHEN LOWER(CAST(cedula AS TEXT)) LIKE LOWER(%s) THEN 2  -- Empieza con
+                        ELSE 3  -- Contiene
+                    END,
+                    fecha_registro DESC
+                LIMIT 100
             """)
             search_term = f"%{cedula}%"
-            cursor.execute(query, (search_term,))
+            starts_with = f"{cedula}%"
+            cursor.execute(query, (search_term, cedula, starts_with))
         elif nombre:
-            # Si el término de búsqueda contiene espacios, dividirlo y buscar cada palabra
+            # Búsqueda optimizada por nombre con ordenamiento por relevancia
             search_terms = nombre.strip().split()
             
             if len(search_terms) > 1:
@@ -310,8 +354,8 @@ def buscar_postulante(cedula=None, nombre=None):
                 params = []
                 
                 for term in search_terms:
-                    if term.strip():  # Ignorar términos vacíos
-                        conditions.append("(nombre ILIKE %s OR apellido ILIKE %s)")
+                    if term.strip():
+                        conditions.append("(LOWER(nombre) LIKE LOWER(%s) OR LOWER(apellido) LIKE LOWER(%s))")
                         params.extend([f"%{term}%", f"%{term}%"])
                 
                 if conditions:
@@ -321,21 +365,41 @@ def buscar_postulante(cedula=None, nombre=None):
                                usuario_ultima_edicion, fecha_ultima_edicion
                         FROM postulantes 
                         WHERE {' AND '.join(conditions)}
+                        ORDER BY 
+                            CASE 
+                                WHEN LOWER(nombre) LIKE LOWER(%s) THEN 1  -- Nombre empieza con
+                                WHEN LOWER(apellido) LIKE LOWER(%s) THEN 2  -- Apellido empieza con
+                                ELSE 3
+                            END,
+                            fecha_registro DESC
+                        LIMIT 100
                     """)
+                    params.extend([f"{nombre}%", f"{nombre}%"])
                     cursor.execute(query, params)
                 else:
                     return []
             else:
-                # Búsqueda con una sola palabra (comportamiento original)
+                # Búsqueda con una sola palabra optimizada
                 query = sql.SQL("""
                     SELECT id, nombre, apellido, cedula, fecha_nacimiento, 
                            telefono, fecha_registro, usuario_registrador, registrado_por, aparato_id, dedo_registrado,
                            usuario_ultima_edicion, fecha_ultima_edicion
                     FROM postulantes 
-                    WHERE nombre ILIKE %s OR apellido ILIKE %s
+                    WHERE LOWER(nombre) LIKE LOWER(%s) OR LOWER(apellido) LIKE LOWER(%s)
+                    ORDER BY 
+                        CASE 
+                            WHEN LOWER(nombre) LIKE LOWER(%s) THEN 1  -- Nombre empieza con
+                            WHEN LOWER(apellido) LIKE LOWER(%s) THEN 2  -- Apellido empieza con
+                            WHEN LOWER(nombre) LIKE LOWER(%s) THEN 3  -- Nombre contiene
+                            WHEN LOWER(apellido) LIKE LOWER(%s) THEN 4  -- Apellido contiene
+                            ELSE 5
+                        END,
+                        fecha_registro DESC
+                    LIMIT 100
                 """)
                 search_term = f"%{nombre}%"
-                cursor.execute(query, (search_term, search_term))
+                starts_with = f"{nombre}%"
+                cursor.execute(query, (search_term, search_term, starts_with, starts_with, search_term, search_term))
         else:
             return []
         
@@ -915,6 +979,21 @@ def init_database():
             )
         """)
         
+        # Crear tabla de privilegios si no existe
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS privilegios (
+                id SERIAL PRIMARY KEY,
+                rol VARCHAR(20) NOT NULL,
+                permiso VARCHAR(50) NOT NULL,
+                descripcion TEXT,
+                activo BOOLEAN DEFAULT TRUE,
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(rol, permiso)
+            )
+        """)
+        
+
+        
         conn.commit()
         logger.info("✅ Base de datos inicializada correctamente")
         
@@ -924,6 +1003,9 @@ def init_database():
         # Crear usuario admin por defecto
         create_default_admin()
         
+        # Inicializar privilegios por defecto
+        init_default_privileges(cursor, conn)
+        
         return True
         
     except Exception as e:
@@ -932,6 +1014,219 @@ def init_database():
     finally:
         if conn:
             conn.close()
+
+# ============================================================================
+# FUNCIONES PARA PRIVILEGIOS
+# ============================================================================
+
+def init_default_privileges(cursor, conn):
+    """
+    Inicializar privilegios por defecto para cada rol
+    """
+    try:
+        # Definir privilegios por defecto
+        default_privileges = [
+            # USUARIO - Privilegios básicos
+            ('USUARIO', 'buscar_postulantes', 'Puede buscar y ver postulantes'),
+            ('USUARIO', 'agregar_postulante', 'Puede agregar nuevos postulantes'),
+            ('USUARIO', 'lista_postulantes', 'Puede ver la lista de postulantes'),
+            ('USUARIO', 'estadisticas_basicas', 'Puede ver estadísticas básicas'),
+            ('USUARIO', 'gestion_zkteco_basica', 'Puede usar dispositivos ZKTeco'),
+            
+            # ADMIN - Privilegios intermedios
+            ('ADMIN', 'buscar_postulantes', 'Puede buscar y ver postulantes'),
+            ('ADMIN', 'agregar_postulante', 'Puede agregar nuevos postulantes'),
+            ('ADMIN', 'lista_postulantes', 'Puede ver la lista de postulantes'),
+            ('ADMIN', 'estadisticas_completas', 'Puede ver todas las estadísticas'),
+            ('ADMIN', 'gestion_zkteco_completa', 'Puede gestionar dispositivos ZKTeco'),
+            ('ADMIN', 'editar_postulantes_propios', 'Puede editar sus propios postulantes'),
+            ('ADMIN', 'editar_postulantes_otros', 'Puede editar postulantes de otros usuarios'),
+            ('ADMIN', 'eliminar_postulantes_propios', 'Puede eliminar sus propios postulantes'),
+            
+            # SUPERADMIN - Privilegios totales
+            ('SUPERADMIN', 'buscar_postulantes', 'Puede buscar y ver postulantes'),
+            ('SUPERADMIN', 'agregar_postulante', 'Puede agregar nuevos postulantes'),
+            ('SUPERADMIN', 'lista_postulantes', 'Puede ver la lista de postulantes'),
+            ('SUPERADMIN', 'estadisticas_completas', 'Puede ver todas las estadísticas'),
+            ('SUPERADMIN', 'gestion_zkteco_completa', 'Puede gestionar dispositivos ZKTeco'),
+            ('SUPERADMIN', 'editar_postulantes_propios', 'Puede editar sus propios postulantes'),
+            ('SUPERADMIN', 'editar_postulantes_otros', 'Puede editar postulantes de otros usuarios'),
+            ('SUPERADMIN', 'eliminar_postulantes_propios', 'Puede eliminar sus propios postulantes'),
+            ('SUPERADMIN', 'eliminar_postulantes_otros', 'Puede eliminar postulantes de otros usuarios'),
+            ('SUPERADMIN', 'gestion_usuarios', 'Puede gestionar usuarios del sistema'),
+            ('SUPERADMIN', 'gestion_privilegios', 'Puede gestionar privilegios del sistema'),
+        ]
+        
+        # Insertar privilegios por defecto
+        for rol, permiso, descripcion in default_privileges:
+            cursor.execute("""
+                INSERT INTO privilegios (rol, permiso, descripcion, activo)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (rol, permiso) DO NOTHING
+            """, (rol, permiso, descripcion, True))
+        
+        conn.commit()
+        logger.info("✅ Privilegios por defecto inicializados correctamente")
+        
+    except Exception as e:
+        logger.error(f"Error al inicializar privilegios: {e}")
+        conn.rollback()
+
+def verificar_privilegio(rol, permiso):
+    """
+    Verificar si un rol tiene un privilegio específico
+    
+    Args:
+        rol (str): Rol del usuario
+        permiso (str): Permiso a verificar
+        
+    Returns:
+        bool: True si tiene el privilegio, False en caso contrario
+    """
+    try:
+        conn = connect_db()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT activo FROM privilegios 
+            WHERE rol = %s AND permiso = %s
+        """, (rol, permiso))
+        
+        result = cursor.fetchone()
+        
+        if result:
+            return result[0]  # Retorna el valor de 'activo'
+        else:
+            # Si no existe el privilegio, SUPERADMIN tiene todos los permisos
+            return rol == 'SUPERADMIN'
+            
+    except Exception as e:
+        logger.error(f"Error al verificar privilegio: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def obtener_privilegios_rol(rol):
+    """
+    Obtener todos los privilegios de un rol específico
+    
+    Args:
+        rol (str): Rol del usuario
+        
+    Returns:
+        list: Lista de privilegios del rol
+    """
+    try:
+        conn = connect_db()
+        if not conn:
+            return []
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT permiso, descripcion, activo 
+            FROM privilegios 
+            WHERE rol = %s
+            ORDER BY permiso
+        """, (rol,))
+        
+        privilegios = cursor.fetchall()
+        return privilegios
+        
+    except Exception as e:
+        logger.error(f"Error al obtener privilegios del rol: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def actualizar_privilegio(rol, permiso, activo):
+    """
+    Actualizar el estado de un privilegio
+    
+    Args:
+        rol (str): Rol del usuario
+        permiso (str): Permiso a actualizar
+        activo (bool): Estado del privilegio
+        
+    Returns:
+        bool: True si se actualizó correctamente
+    """
+    try:
+        conn = connect_db()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE privilegios 
+            SET activo = %s 
+            WHERE rol = %s AND permiso = %s
+        """, (activo, rol, permiso))
+        
+        conn.commit()
+        logger.info(f"Privilegio {permiso} para rol {rol} actualizado a {activo}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error al actualizar privilegio: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def obtener_todos_privilegios():
+    """
+    Obtener todos los privilegios de todos los roles
+    
+    Returns:
+        list: Lista de todos los privilegios organizados por rol
+    """
+    try:
+        conn = connect_db()
+        if not conn:
+            return {}
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT rol, permiso, descripcion, activo 
+            FROM privilegios 
+            ORDER BY rol, permiso
+        """)
+        
+        privilegios = cursor.fetchall()
+        
+        # Organizar por rol
+        privilegios_por_rol = {}
+        for rol, permiso, descripcion, activo in privilegios:
+            if rol not in privilegios_por_rol:
+                privilegios_por_rol[rol] = []
+            privilegios_por_rol[rol].append({
+                'permiso': permiso,
+                'descripcion': descripcion,
+                'activo': activo
+            })
+        
+        return privilegios_por_rol
+        
+    except Exception as e:
+        logger.error(f"Error al obtener todos los privilegios: {e}")
+        return {}
+    finally:
+        if conn:
+            conn.close()
+
+# ============================================================================
+# FUNCIONES PARA COMUNICADOS
+# ============================================================================
+
+
 
 if __name__ == "__main__":
     # Prueba de inicialización

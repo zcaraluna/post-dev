@@ -65,11 +65,19 @@ desktop.ini
 .project
 .pydevproject
 
-# Archivos de instalación
+# Archivos de instalación y distribución
 *.exe
 *.msi
 *.deb
 *.rpm
+*.ico
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.svg
 
 # Archivos de prueba
 test_*.py
@@ -87,3 +95,133 @@ htmlcov/
 # (agregar aquí archivos específicos que no quieras versionar)
 # database_backup/
 # device_config/
+
+# Carpetas de distribución y compilación
+dist/
+build/
+Output/
+__pycache__/
+*.spec
+
+# Archivos de PyInstaller
+*.spec
+build/
+dist/
+
+# Archivos de Inno Setup
+Output/
+*.exe
+
+# Archivos de iconos generados (pero mantener los originales)
+quira_*.ico
+quira_*.png
+*_maxima_calidad.*
+*_profesional.*
+*_simple.*
+*_ultra_hd.*
+*_blanco.*
+
+# Excepciones - archivos que SÍ queremos mantener
+!quiraXXXL.png
+!quiraXXL.png
+!quira_bigger.png
+!quira.png
+!instituto.png
+!Sistema_Postulantes_Setup.iss
+!crear_instalador.ps1
+!INSTRUCCIONES_INNO_SETUP.md
+
+# Scripts temporales de generación
+crear_icono_*.py
+convert_to_ico.py
+build_distribution.py
+compilar_con_imagen.py
+
+# Archivos de configuración local de base de datos
+database_config.py
+local_config.py
+
+# Archivos de migración temporales
+migrar_*.py
+verificar_*.py
+actualizar_*.py
+diagnostico_*.py
+test_*.py
+
+# Archivos de evaluación y pruebas
+evaluacion_*.py
+optimizar_*.py
+test_*.py
+
+# Archivos de comunicación (eliminados)
+gestion_comunicados.py
+enviar_comentarios.py
+enviar_comunicado.py
+test_enviar_*.py
+
+# Archivos de configuración eliminados
+sistema_respaldo.py
+configuracion_sistema.py
+config_respaldo.json
+
+# Archivos de respaldo de base de datos
+*.sql
+*.dump
+*.backup
+
+# Archivos de desarrollo y debugging
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Archivos de sistema operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Archivos de IDE específicos
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/shelf/
+
+# ===========================================
+# NOTAS IMPORTANTES:
+# ===========================================
+# 
+# ARCHIVOS QUE SE MANTIENEN EN EL REPOSITORIO:
+# - quiraXXXL.png, quiraXXL.png, quira_bigger.png, quira.png, instituto.png
+# - Sistema_Postulantes_Setup.iss (script de Inno Setup)
+# - crear_instalador.ps1 (script de automatización)
+# - INSTRUCCIONES_INNO_SETUP.md (documentación)
+# 
+# ARCHIVOS QUE SE IGNORAN:
+# - Todos los archivos .ico generados (quira_*.ico)
+# - Carpetas dist/, build/, Output/
+# - Scripts temporales de generación de iconos
+# - Archivos de migración y diagnóstico temporales
+# - Archivos de configuración local
+# 
+# PARA COMPILAR EL PROYECTO:
+# 1. Activar entorno: zkteco_env
+# 2. Ejecutar PyInstaller: python -m PyInstaller main_integrado.py --onedir --noconsole --icon=quira_maxima_calidad.ico --add-data="quiraXXXL.png;." --add-data="quira.png;." --add-data="quiraXXL.png;." --add-data="quira_bigger.png;." --add-data="instituto.png;." --hidden-import=zkteco_connector_v2 --hidden-import=gestion_zkteco
+# 3. Crear instalador: .\crear_instalador.ps1
+# ===========================================

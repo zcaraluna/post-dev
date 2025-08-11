@@ -8,6 +8,59 @@ from tkinter import ttk, messagebox
 from database import connect_db
 from datetime import datetime, timedelta
 import ctypes
+import locale
+
+# Configurar locale para formato de números latinoamericano
+try:
+    locale.setlocale(locale.LC_ALL, 'es_PY.UTF-8')
+except:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Spanish_Spain.1252')
+    except:
+        pass
+
+def formatear_numero(numero, decimales=0):
+    """
+    Formatea un número con separadores de miles (puntos) y decimales (comas)
+    Ejemplo: 1000000 -> 1.000.000, 10.5 -> 10,5
+    """
+    if numero is None:
+        return "0"
+    
+    # Convertir a float para manejar decimales
+    numero_float = float(numero)
+    
+    if decimales == 0:
+        # Número entero
+        return f"{int(numero_float):,}".replace(",", ".")
+    else:
+        # Número con decimales
+        numero_str = f"{numero_float:.{decimales}f}"
+        parte_entera, parte_decimal = numero_str.split('.')
+        
+        # Formatear parte entera con separadores de miles
+        parte_entera_formateada = f"{int(parte_entera):,}".replace(",", ".")
+        
+        # Combinar con coma decimal
+        return f"{parte_entera_formateada},{parte_decimal}"
+
+def formatear_porcentaje(porcentaje, decimales=1):
+    """
+    Formatea un porcentaje con separadores decimales (comas)
+    Ejemplo: 10.5 -> 10,5%
+    """
+    if porcentaje is None:
+        return "0,0%"
+    
+    # Convertir a float para manejar decimales
+    porcentaje_float = float(porcentaje)
+    
+    # Formatear con coma decimal
+    porcentaje_str = f"{porcentaje_float:.{decimales}f}"
+    parte_entera, parte_decimal = porcentaje_str.split('.')
+    
+    # Combinar con coma decimal y símbolo %
+    return f"{parte_entera},{parte_decimal}%"
 
 # Configurar DPI para Windows (HD/4K)
 try:
@@ -541,8 +594,8 @@ class Estadisticas(tk.Toplevel):
                 porcentaje = (count / total) * 100
                 self.stats_table.insert("", "end", values=(
                     unidad,
-                    f"{count:,}",
-                    f"{porcentaje:.1f}%"
+                    formatear_numero(count),
+                    formatear_porcentaje(porcentaje)
                 ))
             
             print(f"✅ Datos cargados: {total} registros procesados")
@@ -618,8 +671,8 @@ class Estadisticas(tk.Toplevel):
                 porcentaje = (count / total) * 100
                 self.stats_table.insert("", "end", values=(
                     dedo,
-                    f"{count:,}",
-                    f"{porcentaje:.1f}%"
+                    formatear_numero(count),
+                    formatear_porcentaje(porcentaje)
                 ))
             
             print(f"✅ Datos de dedos cargados: {total} registros")
@@ -735,8 +788,8 @@ class Estadisticas(tk.Toplevel):
                     porcentaje = (count / total) * 100
                     self.stats_table.insert("", "end", values=(
                         f"{edad} años",
-                        f"{count:,}",
-                        f"{porcentaje:.1f}%"
+                        formatear_numero(count),
+                        formatear_porcentaje(porcentaje)
                     ))
                 
                 print(f"✅ Datos de edades individuales cargados: {total} registros")
@@ -851,8 +904,8 @@ class Estadisticas(tk.Toplevel):
                 porcentaje = (count / total) * 100
                 self.stats_table.insert("", "end", values=(
                     rango,
-                    f"{count:,}",
-                    f"{porcentaje:.1f}%"
+                    formatear_numero(count),
+                    formatear_porcentaje(porcentaje)
                 ))
             
             print(f"✅ Datos de edades cargados: {total} registros")
@@ -906,8 +959,8 @@ class Estadisticas(tk.Toplevel):
             for sexo, cantidad, porcentaje in sexo_data:
                 self.stats_table.insert("", "end", values=(
                     sexo,
-                    f"{cantidad:,}",
-                    f"{porcentaje}%"
+                    formatear_numero(cantidad),
+                    formatear_porcentaje(porcentaje)
                 ))
             
             print(f"✅ Datos de sexo cargados: {len(sexo_data)} categorías")
@@ -969,8 +1022,8 @@ class Estadisticas(tk.Toplevel):
             for dia, cantidad, porcentaje in dia_data:
                 self.stats_table.insert("", "end", values=(
                     dia,
-                    f"{cantidad:,}",
-                    f"{porcentaje}%"
+                    formatear_numero(cantidad),
+                    formatear_porcentaje(porcentaje)
                 ))
             
             print(f"✅ Datos por día de la semana cargados: {len(dia_data)} días")
@@ -1024,8 +1077,8 @@ class Estadisticas(tk.Toplevel):
             for anio, cantidad, porcentaje in anio_data:
                 self.stats_table.insert("", "end", values=(
                     str(int(anio)),
-                    f"{cantidad:,}",
-                    f"{porcentaje}%"
+                    formatear_numero(cantidad),
+                    formatear_porcentaje(porcentaje)
                 ))
             
             print(f"✅ Datos por años cargados: {len(anio_data)} años")
@@ -1083,8 +1136,8 @@ class Estadisticas(tk.Toplevel):
                 hora_formato = f"{int(hora):02d}:00 - {int(hora):02d}:59"
                 self.stats_table.insert("", "end", values=(
                     hora_formato,
-                    f"{cantidad:,}",
-                    f"{porcentaje}%"
+                    formatear_numero(cantidad),
+                    formatear_porcentaje(porcentaje)
                 ))
             
             print(f"✅ Datos de horarios de pico cargados: {len(hora_data)} horas")
@@ -1153,8 +1206,8 @@ class Estadisticas(tk.Toplevel):
             for rango_edad, sexo, cantidad, porcentaje in edad_sexo_data:
                 self.stats_table.insert("", "end", values=(
                     f"{rango_edad} - {sexo}",
-                    f"{cantidad:,}",
-                    f"{porcentaje}%"
+                    formatear_numero(cantidad),
+                    formatear_porcentaje(porcentaje)
                 ))
             
             print(f"✅ Datos por rango de edad y sexo cargados: {len(edad_sexo_data)} combinaciones")
@@ -1175,8 +1228,10 @@ class Estadisticas(tk.Toplevel):
             for item in self.stats_table.get_children():
                 self.stats_table.delete(item)
                 
-            # Actualizar header de tabla para edad promedio
+            # Actualizar headers de tabla para edad promedio
             self.stats_table.heading("unidad", text="UNIDAD")
+            self.stats_table.heading("registros", text="EDAD PROMEDIO")
+            self.stats_table.heading("porcentaje", text="TOTAL PERSONAS")
             self.update_idletasks()
             
             conn = connect_db()
@@ -1209,8 +1264,8 @@ class Estadisticas(tk.Toplevel):
             for unidad, edad_promedio, total_personas in edad_promedio_data:
                 self.stats_table.insert("", "end", values=(
                     unidad,
-                    f"{edad_promedio} años ({total_personas} personas)",
-                    f"{total_personas} registros"
+                    f"{formatear_numero(edad_promedio, 1)} años",
+                    f"{formatear_numero(total_personas)} personas"
                 ))
             
             print(f"✅ Datos de edad promedio por unidad cargados: {len(edad_promedio_data)} unidades")
@@ -1242,13 +1297,11 @@ class Estadisticas(tk.Toplevel):
                 
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT u.nombre, u.apellido, COUNT(p.id) as total_registros
-                FROM usuarios u
-                LEFT JOIN postulantes p ON u.id = p.usuario_registrador
-                GROUP BY u.id, u.nombre, u.apellido
-                HAVING COUNT(p.id) > 0
+                SELECT p.registrado_por, COUNT(p.id) as total_registros
+                FROM postulantes p
+                WHERE p.registrado_por IS NOT NULL AND p.registrado_por != ''
+                GROUP BY p.registrado_por
                 ORDER BY total_registros DESC
-                LIMIT 5
             """)
             
             usuarios_data = cursor.fetchall()
@@ -1260,17 +1313,16 @@ class Estadisticas(tk.Toplevel):
                 
             # Ranking con medallas
             medallas = ["🥇", "🥈", "🥉", "🏅", "🎖️"]
-            total_general = sum(total for _, _, total in usuarios_data)
+            total_general = sum(total for _, total in usuarios_data)
             
             # Insertar datos en la tabla sin ranking
-            for nombre, apellido, total_registros in usuarios_data:
+            for registrado_por, total_registros in usuarios_data:
                 porcentaje = (total_registros / total_general) * 100
-                nombre_completo = f"{nombre} {apellido}"
                 
                 self.stats_table.insert("", "end", values=(
-                    nombre_completo,
-                    f"{total_registros:,}",
-                    f"{porcentaje:.1f}%"
+                    registrado_por,
+                    formatear_numero(total_registros),
+                    formatear_porcentaje(porcentaje)
                 ))
             
             print(f"✅ Datos de usuarios cargados: {len(usuarios_data)} usuarios")
@@ -1851,13 +1903,22 @@ class Estadisticas(tk.Toplevel):
         try:
             print("🔄 Cargando estadísticas...")
             
+            # Verificar privilegios para estadísticas
+            from privilegios_utils import puede_ver_estadisticas_completas, verificar_permiso
+            
             # Cargar métricas principales
             self.load_main_metrics()
             
-            # Cargar estadísticas detalladas
-            self.load_detailed_stats()
-            
-            print("✅ Estadísticas cargadas correctamente")
+            # Cargar estadísticas detalladas solo si tiene permisos
+            if puede_ver_estadisticas_completas(self.user_data) or verificar_permiso(self.user_data, 'estadisticas_basicas', mostrar_error=False):
+                self.load_detailed_stats()
+                print("✅ Estadísticas cargadas correctamente")
+            else:
+                # Mostrar mensaje de acceso restringido
+                messagebox.showwarning("Acceso Restringido", 
+                                     "No tiene permisos para ver estadísticas detalladas.\n"
+                                     "Contacte al administrador del sistema.")
+                self.destroy()
             
         except Exception as e:
             print(f"❌ Error al cargar estadísticas: {e}")
@@ -2007,7 +2068,7 @@ class Estadisticas(tk.Toplevel):
                 total = sum(unidad_count.values())
                 for unidad, count in sorted(unidad_count.items()):
                     porcentaje = (count / total) * 100
-                    self.unidad_text.insert(tk.END, f"{unidad:<20} {count:>4} ({porcentaje:>5.1f}%)\n")
+                    self.unidad_text.insert(tk.END, f"{unidad:<20} {formatear_numero(count):>8} ({formatear_porcentaje(porcentaje):>6})\n")
                     
                 self.unidad_text.insert(tk.END, f"\nTotal: {total} registros\n")
             else:
@@ -2045,7 +2106,7 @@ class Estadisticas(tk.Toplevel):
                 total = sum(dedos_count.values())
                 for dedo, count in sorted(dedos_count.items()):
                     porcentaje = (count / total) * 100
-                    self.dedos_text.insert(tk.END, f"{dedo:<10} {count:>4} ({porcentaje:>5.1f}%)\n")
+                    self.dedos_text.insert(tk.END, f"{dedo:<10} {formatear_numero(count):>8} ({formatear_porcentaje(porcentaje):>6})\n")
                     
                 self.dedos_text.insert(tk.END, f"\nTotal: {total} registros\n")
             else:
@@ -2186,7 +2247,7 @@ class Estadisticas(tk.Toplevel):
             for rango, count in rangos.items():
                 if count > 0:
                     porcentaje = (count / total) * 100
-                    self.age_distribution_text.insert(tk.END, f"{rango:<8} {count:>4} ({porcentaje:>5.1f}%)\n")
+                    self.age_distribution_text.insert(tk.END, f"{rango:<8} {formatear_numero(count):>8} ({formatear_porcentaje(porcentaje):>6})\n")
                     
             self.age_distribution_text.insert(tk.END, f"\nTotal: {total} registros\n")
             self.age_distribution_text.insert(tk.END, f"Promedio: {sum(edades)/len(edades):.1f} años\n")
@@ -2213,17 +2274,15 @@ class Estadisticas(tk.Toplevel):
                 
             cursor = conn.cursor()
             
-            # Consulta para obtener los 5 usuarios que más han registrado postulantes
+            # Consulta para obtener todos los usuarios que han registrado postulantes
             cursor.execute("""
                 SELECT 
-                    u.nombre,
-                    u.apellido,
+                    p.registrado_por,
                     COUNT(p.id) as total_registros
-                FROM usuarios u
-                LEFT JOIN postulantes p ON u.id = p.usuario_registrador
-                GROUP BY u.id, u.nombre, u.apellido
+                FROM postulantes p
+                WHERE p.registrado_por IS NOT NULL AND p.registrado_por != ''
+                GROUP BY p.registrado_por
                 ORDER BY total_registros DESC
-                LIMIT 5
             """)
             
             usuarios_data = cursor.fetchall()
@@ -2232,19 +2291,18 @@ class Estadisticas(tk.Toplevel):
             self.usuario_text.config(state='normal')
             self.usuario_text.delete(1.0, tk.END)
             if usuarios_data:
-                self.usuario_text.insert(tk.END, "TOP 5 USUARIOS CON MÁS REGISTROS\n")
+                self.usuario_text.insert(tk.END, "TODOS LOS USUARIOS CON REGISTROS\n")
                 self.usuario_text.insert(tk.END, "=" * 45 + "\n\n")
                 
                 # Calcular el total de registros para porcentajes
-                total_registros = sum(row[2] for row in usuarios_data)
+                total_registros = sum(row[1] for row in usuarios_data)
                 
-                for i, (nombre, apellido, registros) in enumerate(usuarios_data, 1):
-                    nombre_completo = f"{nombre} {apellido}".strip()
+                for i, (registrado_por, registros) in enumerate(usuarios_data, 1):
                     if registros > 0 and total_registros > 0:
                         porcentaje = (registros / total_registros) * 100
-                        self.usuario_text.insert(tk.END, f"{i:2d}. {nombre_completo:<25} {registros:>4} ({porcentaje:>5.1f}%)\n")
+                        self.usuario_text.insert(tk.END, f"{i:2d}. {registrado_por:<25} {formatear_numero(registros):>8} ({formatear_porcentaje(porcentaje):>6})\n")
                     else:
-                        self.usuario_text.insert(tk.END, f"{i:2d}. {nombre_completo:<25} {registros:>4} (0.0%)\n")
+                        self.usuario_text.insert(tk.END, f"{i:2d}. {registrado_por:<25} {formatear_numero(registros):>8} (0,0%)\n")
                 
                 self.usuario_text.insert(tk.END, f"\nTotal de registros: {total_registros}\n")
             else:

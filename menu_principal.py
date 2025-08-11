@@ -48,11 +48,34 @@ class MenuPrincipal(tk.Frame):
             # Cargar y mostrar la imagen del instituto
             from PIL import Image, ImageTk
             import os
+            import sys
             
-            # Ruta de la imagen (usar ruta absoluta)
-            img_path = os.path.join(os.path.dirname(__file__), "instituto.png")
+            # Función para obtener la ruta base correcta
+            def get_base_path():
+                if getattr(sys, 'frozen', False):
+                    # Ejecutando desde PyInstaller
+                    return os.path.dirname(sys.executable)
+                else:
+                    # Ejecutando desde script
+                    return os.path.dirname(os.path.abspath(__file__))
             
-            if os.path.exists(img_path):
+            base_path = get_base_path()
+            
+            # Lista de posibles rutas para la imagen
+            posibles_rutas = [
+                os.path.join(base_path, "instituto.png"),
+                os.path.join(base_path, "_internal", "instituto.png"),  # En _internal (PyInstaller)
+                os.path.join(os.path.dirname(__file__), "instituto.png"),  # Ruta original
+                "instituto.png",  # Ruta relativa
+            ]
+            
+            img_path = None
+            for ruta in posibles_rutas:
+                if os.path.exists(ruta):
+                    img_path = ruta
+                    break
+            
+            if img_path:
                 # Cargar la imagen
                 img = Image.open(img_path)
                 
@@ -73,9 +96,9 @@ class MenuPrincipal(tk.Frame):
                 img_label.image = photo  # Mantener referencia
                 img_label.pack(pady=(0, 20))
                 
-                print("✅ Imagen del instituto cargada correctamente")
+                print(f"✅ Imagen del instituto cargada correctamente desde: {img_path}")
             else:
-                print(f"⚠️ No se encontró la imagen en: {img_path}")
+                print(f"⚠️ No se encontró la imagen del instituto en ninguna ruta")
                 
         except ImportError:
             print("⚠️ Pillow no está instalado. Ejecute: pip install Pillow")
@@ -120,11 +143,11 @@ class MenuPrincipal(tk.Frame):
         menubar.add_cascade(label="Sistema", menu=sistema_menu)
         sistema_menu.add_command(label="Gestión ZKTeco", command=self.gestion_zkteco)
         
-        # Solo mostrar gestión de usuarios y configuración para superadmin
+        # Solo mostrar gestión de usuarios y privilegios para superadmin
         if self.user_data["rol"] == "SUPERADMIN":
             sistema_menu.add_separator()
             sistema_menu.add_command(label="Gestión de Usuarios", command=self.gestion_usuarios)
-            sistema_menu.add_command(label="Configuración del Sistema", command=self.configuracion_sistema)
+            sistema_menu.add_command(label="Gestión de Privilegios", command=self.gestion_privilegios)
         
         # Menú Ayuda
         ayuda_menu = tk.Menu(menubar, tearoff=0)
@@ -222,49 +245,200 @@ class MenuPrincipal(tk.Frame):
     
     def buscar_postulantes(self):
         """Abrir ventana de búsqueda de postulantes"""
-        from buscar_postulantes import BuscarPostulantes
-        BuscarPostulantes(self, self.user_data)
+        from privilegios_utils import verificar_permiso
+        
+        if verificar_permiso(self.user_data, 'buscar_postulantes'):
+            from buscar_postulantes import BuscarPostulantes
+            BuscarPostulantes(self, self.user_data)
     
     def agregar_postulante(self):
         """Abrir ventana de agregar postulante"""
-        from agregar_postulante import AgregarPostulante
-        AgregarPostulante(self, self.user_data)
+        from privilegios_utils import verificar_permiso
+        
+        if verificar_permiso(self.user_data, 'agregar_postulante'):
+            from agregar_postulante import AgregarPostulante
+            AgregarPostulante(self, self.user_data)
     
     def gestion_zkteco(self):
         """Abrir gestión del dispositivo ZKTeco"""
-        from gestion_zkteco import GestionZKTeco
-        GestionZKTeco(self, self.user_data)
+        from privilegios_utils import puede_gestionar_zkteco
+        
+        if puede_gestionar_zkteco(self.user_data):
+            from gestion_zkteco import GestionZKTeco
+            GestionZKTeco(self, self.user_data)
     
     def ver_lista_postulantes(self):
         """Abrir lista completa de postulantes"""
-        from lista_postulantes import ListaPostulantes
-        ListaPostulantes(self, self.user_data)
+        from privilegios_utils import verificar_permiso
+        
+        if verificar_permiso(self.user_data, 'lista_postulantes'):
+            from lista_postulantes import ListaPostulantes
+            ListaPostulantes(self, self.user_data)
     
     def ver_estadisticas(self):
         """Abrir estadísticas del sistema"""
-        from estadisticas import Estadisticas
-        Estadisticas(self, self.user_data)
+        from privilegios_utils import puede_ver_estadisticas_completas, verificar_permiso
+        
+        # Verificar si puede ver estadísticas completas o básicas
+        if puede_ver_estadisticas_completas(self.user_data) or verificar_permiso(self.user_data, 'estadisticas_basicas', mostrar_error=False):
+            from estadisticas import Estadisticas
+            Estadisticas(self, self.user_data)
     
     def gestion_usuarios(self):
         """Abrir gestión de usuarios"""
-        from gestion_usuarios import GestionUsuarios
-        GestionUsuarios(self, self.user_data)
+        from privilegios_utils import verificar_permiso
+        
+        if verificar_permiso(self.user_data, 'gestion_usuarios'):
+            from gestion_usuarios import GestionUsuarios
+            GestionUsuarios(self, self.user_data)
     
-    def configuracion_sistema(self):
-        """Abrir configuración del sistema"""
-        from sistema_respaldo import InterfazRespaldo
-        InterfazRespaldo(self.parent)
+    def gestion_privilegios(self):
+        """Abrir gestión de privilegios"""
+        from privilegios_utils import verificar_permiso
+        
+        if verificar_permiso(self.user_data, 'gestion_privilegios'):
+            from gestion_privilegios import GestionPrivilegios
+            GestionPrivilegios(self, self.user_data)
     
+
     def acerca_de(self):
         """Mostrar información sobre el sistema"""
-        messagebox.showinfo(
-            "Acerca de",
-            "Sistema: QUIRA\n\n"
-            "Versión: 1.0\n"
-            "Desarrollado para el Instituto de Criminalística\n"
-            "Policía Nacional del Paraguay\n\n"
-            "© 2025 - Todos los derechos reservados"
-        )
+        # Crear ventana personalizada
+        about_window = tk.Toplevel(self.parent)
+        about_window.title("Acerca de QUIRA")
+        about_window.geometry('')
+        about_window.resizable(False, False)
+        about_window.configure(bg='#f0f0f0')
+        
+        # Centrar la ventana
+        about_window.transient(self.parent)
+        about_window.grab_set()
+        
+        # Frame principal
+        main_frame = tk.Frame(about_window, bg='#f0f0f0')
+        main_frame.pack(expand=True, fill='both', padx=20, pady=20)
+        
+        # Frame para logo y título (para controlar espaciado)
+        logo_title_frame = tk.Frame(main_frame, bg='#f0f0f0')
+        logo_title_frame.pack(pady=(0, 10))
+        
+        # Logo
+        def cargar_logo():
+            """Cargar logo con manejo robusto para PyInstaller"""
+            import os
+            import sys
+            
+            # Función para obtener la ruta base correcta
+            def get_base_path():
+                if getattr(sys, 'frozen', False):
+                    # Ejecutando en PyInstaller
+                    return os.path.dirname(sys.executable)
+                else:
+                    # Ejecutando en desarrollo
+                    return os.path.dirname(os.path.abspath(__file__))
+            
+            base_path = get_base_path()
+            
+            # Lista de posibles rutas para la imagen
+            posibles_rutas = [
+                os.path.join(base_path, "quiraXXXL.png"),
+                os.path.join(base_path, "quira.png"),
+                os.path.join(base_path, "_internal", "quiraXXXL.png"),  # En _internal (PyInstaller)
+                os.path.join(base_path, "_internal", "quira.png"),      # En _internal (PyInstaller)
+                "quiraXXXL.png",  # Ruta relativa
+                "quira.png",      # Ruta relativa
+            ]
+            
+            for ruta in posibles_rutas:
+                try:
+                    if os.path.exists(ruta):
+                        from PIL import Image, ImageTk
+                        logo_img = Image.open(ruta)
+                        # Redimensionar logo a 180x180 manteniendo proporción
+                        logo_img = logo_img.resize((180, 180), Image.Resampling.LANCZOS)
+                        logo_photo = ImageTk.PhotoImage(logo_img)
+                        print(f"✅ Logo cargado desde: {ruta}")
+                        return logo_photo
+                    else:
+                        print(f"⚠️ Ruta no existe: {ruta}")
+                except Exception as e:
+                    print(f"❌ Error cargando imagen {ruta}: {e}")
+                    continue
+            
+            return None
+        
+        # Intentar cargar el logo
+        logo_photo = cargar_logo()
+        if logo_photo:
+            logo_label = tk.Label(logo_title_frame, image=logo_photo, bg='#f0f0f0')
+            logo_label.image = logo_photo  # Mantener referencia
+            logo_label.pack(pady=(0, 0))
+        else:
+            # Si no se puede cargar la imagen, mostrar texto estilizado
+            logo_label = tk.Label(logo_title_frame, text="QUIRA", font=('Arial', 36, 'bold'), 
+                                fg='#2c3e50', bg='#f0f0f0')
+            logo_label.pack(pady=(0, 0))
+        
+        # Título del sistema
+        title_label = tk.Label(logo_title_frame, text="Sistema QUIRA", 
+                              font=('Arial', 18, 'bold'), fg='#2c3e50', bg='#f0f0f0')
+        title_label.pack(pady=(0, 0))
+        
+        # Versión
+        version_label = tk.Label(main_frame, text="Versión 1.0", 
+                                font=('Arial', 12), fg='#7f8c8d', bg='#f0f0f0')
+        version_label.pack(pady=(0, 20))
+        
+        # Información del desarrollador
+        dev_frame = tk.Frame(main_frame, bg='#f0f0f0')
+        dev_frame.pack(pady=(0, 20))
+        
+        dev_title = tk.Label(dev_frame, text="Desarrollador:", 
+                            font=('Arial', 12, 'bold'), fg='#2c3e50', bg='#f0f0f0')
+        dev_title.pack()
+        
+        dev_name = tk.Label(dev_frame, text="Guillermo Recalde", 
+                           font=('Arial', 12), fg='#34495e', bg='#f0f0f0')
+        dev_name.pack()
+        
+        dev_alias = tk.Label(dev_frame, text="a.k.a. \"s1mple\"", 
+                            font=('Arial', 10, 'italic'), fg='#7f8c8d', bg='#f0f0f0')
+        dev_alias.pack()
+        
+        # Información institucional
+        inst_frame = tk.Frame(main_frame, bg='#f0f0f0')
+        inst_frame.pack(pady=(0, 20))
+        
+        inst_title = tk.Label(inst_frame, text="Desarrollado para:", 
+                             font=('Arial', 12, 'bold'), fg='#2c3e50', bg='#f0f0f0')
+        inst_title.pack()
+        
+        inst_name = tk.Label(inst_frame, text="Instituto de Criminalística", 
+                            font=('Arial', 12), fg='#34495e', bg='#f0f0f0')
+        inst_name.pack()
+        
+        inst_org = tk.Label(inst_frame, text="Policía Nacional del Paraguay", 
+                           font=('Arial', 12), fg='#34495e', bg='#f0f0f0')
+        inst_org.pack()
+        
+        # Copyright
+        copyright_label = tk.Label(main_frame, text="© 2025 - Todos los derechos reservados", 
+                                  font=('Arial', 10), fg='#95a5a6', bg='#f0f0f0')
+        copyright_label.pack(pady=(20, 0))
+        
+        # Botón cerrar
+        close_button = tk.Button(main_frame, text="Cerrar", 
+                                command=about_window.destroy,
+                                font=('Arial', 10, 'bold'),
+                                bg='#3498db', fg='white',
+                                relief='flat', padx=20, pady=5)
+        close_button.pack(pady=(20, 0))
+        
+        # Centrar la ventana en la pantalla
+        about_window.update_idletasks()
+        x = (about_window.winfo_screenwidth() // 2) - (about_window.winfo_reqwidth() // 2)
+        y = (about_window.winfo_screenheight() // 2) - (about_window.winfo_reqheight() // 2)
+        about_window.geometry(f"+{x}+{y}")
     
     def logout(self):
         """Cerrar sesión y volver al login"""
@@ -291,11 +465,11 @@ def main():
     except ImportError:
         print("⚠️ No se pudo importar icon_utils")
     
-    # Usuario de prueba
+    # Usuario de prueba (ID real de la base de datos)
     user_data = {
-        'id': 1,
-        'nombre': 'Guillermo Andres',
-        'apellido': 'Recalde Valdez',
+        'id': 5,
+        'nombre': 'GUILLERMO ANDRES',
+        'apellido': 'RECALDE VALDEZ',
         'grado': 'Oficial Segundo',
         'rol': 'SUPERADMIN'
     }

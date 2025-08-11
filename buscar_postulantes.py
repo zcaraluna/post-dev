@@ -21,7 +21,7 @@ class BuscarPostulantes(tk.Toplevel):
         self.all_postulantes = []
         
         self.title("Buscar Postulantes")
-        self.geometry("1000x700")
+        self.geometry('')
         self.resizable(True, True)
         self.transient(parent)
         self.grab_set()
@@ -251,6 +251,16 @@ class BuscarPostulantes(tk.Toplevel):
         self.current_page = 1
         self.update_pagination()
         self.display_current_page()
+        
+        # Mostrar mensaje si no hay resultados
+        if self.total_items == 0:
+            messagebox.showinfo("Sin resultados", 
+                              f"No se encontraron postulantes con {search_type} '{search_term}'.\n\n"
+                              "Sugerencias:\n"
+                              "• Verifique que el término esté escrito correctamente\n"
+                              "• Intente con términos más cortos\n"
+                              "• Use solo números para cédula\n"
+                              "• Use solo letras para nombre")
             
     def clear_search(self):
         """Limpiar búsqueda"""
@@ -371,12 +381,11 @@ class BuscarPostulantes(tk.Toplevel):
             context_menu.tk_popup(event.x_root, event.y_root)
             
     def show_postulante_details(self, values):
-        """Mostrar detalles del postulante con información mejorada"""
+        """Mostrar detalles del postulante con interfaz moderna y estética"""
         if not values:
             return
             
         # Obtener información completa del postulante
-        # Necesitamos encontrar el postulante en la lista por nombre y cédula
         postulante_id = None
         for postulante in self.all_postulantes:
             if (postulante[1] == values[1] and  # nombre
@@ -388,7 +397,9 @@ class BuscarPostulantes(tk.Toplevel):
         if not postulante_id:
             # Intentar buscar por cédula directamente en la base de datos
             from database import buscar_postulante
-            resultados = buscar_postulante(cedula=values[3])
+            # Convertir cédula a string para evitar errores de tipo
+            cedula_str = str(values[3]) if values[3] is not None else ""
+            resultados = buscar_postulante(cedula=cedula_str)
             if resultados:
                 postulante_id = resultados[0][0]  # Tomar el primer resultado
             else:
@@ -401,104 +412,351 @@ class BuscarPostulantes(tk.Toplevel):
             messagebox.showerror("Error", "No se pudo obtener la información del postulante")
             return
             
-        # Crear ventana de detalles con mejor diseño
+        # Crear ventana de detalles con diseño moderno
         details_window = tk.Toplevel(self)
         details_window.title(f"Detalles del Postulante - {values[1]} {values[2]}")
-        details_window.geometry("600x500")
         details_window.transient(self)
         details_window.grab_set()
+        details_window.configure(bg='#f0f2f5')
         
-        # Frame principal
-        main_frame = ttk.Frame(details_window, style='Modern.TFrame', padding=25)
-        main_frame.pack(expand=True, fill='both')
+        # Configurar para que se ajuste al contenido
+        details_window.resizable(True, True)
+        details_window.minsize(600, 400)
         
-        # Título
-        title_label = ttk.Label(main_frame, text="Información del Postulante", style='Title.TLabel')
-        title_label.pack(pady=(0, 20))
+        # Configurar estilos para la ventana de detalles
+        style = ttk.Style()
+        style.configure('Details.TFrame', background='#f0f2f5')
+        style.configure('Card.TFrame', background='white', relief='flat', borderwidth=1)
+        style.configure('Header.TLabel', background='#2c3e50', foreground='white', font=('Segoe UI', 14, 'bold'))
+        style.configure('Section.TLabel', background='white', foreground='#2c3e50', font=('Segoe UI', 12, 'bold'))
+        style.configure('Info.TLabel', background='white', foreground='#34495e', font=('Segoe UI', 10))
+        style.configure('Value.TLabel', background='white', foreground='#2c3e50', font=('Segoe UI', 10, 'bold'))
+        
+        # Frame principal con scroll
+        main_canvas = tk.Canvas(details_window, bg='#f0f2f5', highlightthickness=0, height=560)
+        scrollbar = ttk.Scrollbar(details_window, orient="vertical", command=main_canvas.yview)
+        scrollable_frame = ttk.Frame(main_canvas, style='Details.TFrame')
+        
+        # Configurar el canvas
+        main_canvas.configure(yscrollcommand=scrollbar.set)
+        main_canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        
+        # Configurar el frame para que se expanda horizontalmente
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: main_canvas.configure(scrollregion=main_canvas.bbox("all"))
+        )
+        
+        main_canvas.pack(side="left", fill="both", expand=True, padx=30, pady=20)
+        scrollbar.pack(side="right", fill="y")
         
         # Obtener información adicional
-        # Los índices están basados en la consulta de obtener_postulante_por_id:
-        # id, nombre, apellido, cedula, fecha_nacimiento, telefono, fecha_registro, usuario_registrador, edad, unidad, 
-        # dedo_registrado, registrado_por, aparato_id, uid_k40, huella_dactilar, observaciones, usuario_ultima_edicion, fecha_ultima_edicion
+        nombre_registrador = postulante_completo[11] or "Desconocido"
+        nombre_aparato = obtener_nombre_aparato(postulante_completo[12])
         
-        # Usar usuario_registrador (ID) para obtener el nombre completo del usuario
-        nombre_registrador = obtener_nombre_registrador(postulante_completo[7])  # usuario_registrador (índice 7)
-        nombre_aparato = obtener_nombre_aparato(postulante_completo[12])  # aparato_id (índice 12)
-        
-        # Información detallada
-        # Formatear fecha de nacimiento
+        # Formatear fechas y calcular edad
         fecha_nacimiento = 'No registrada'
-        if postulante_completo[4]:  # fecha_nacimiento
-            try:
-                if isinstance(postulante_completo[4], str):
-                    # Si es string, convertir a objeto date
-                    from datetime import datetime
-                    fecha_obj = datetime.strptime(postulante_completo[4], "%Y-%m-%d")
-                    fecha_nacimiento = fecha_obj.strftime('%d/%m/%Y')
-                else:
-                    # Si es objeto date
-                    fecha_nacimiento = postulante_completo[4].strftime('%d/%m/%Y')
-            except:
-                fecha_nacimiento = 'No registrada'
+        edad_detallada = 'No registrada'
         
-        # Formatear fecha de última edición
+        if postulante_completo[4]:
+            try:
+                from datetime import datetime, date
+                
+                if isinstance(postulante_completo[4], str):
+                    fecha_nac_obj = datetime.strptime(postulante_completo[4], "%Y-%m-%d").date()
+                else:
+                    fecha_nac_obj = postulante_completo[4]
+                
+                fecha_nacimiento = fecha_nac_obj.strftime('%d/%m/%Y')
+                
+                # Calcular edad detallada
+                fecha_actual = date.today()
+                diferencia = fecha_actual - fecha_nac_obj
+                
+                años = diferencia.days // 365
+                meses_restantes = (diferencia.days % 365) // 30
+                dias_restantes = (diferencia.days % 365) % 30
+                
+                if años > 0:
+                    edad_detallada = f"{años} años"
+                    if meses_restantes > 0:
+                        edad_detallada += f", {meses_restantes} meses"
+                    if dias_restantes > 0:
+                        edad_detallada += f", {dias_restantes} días"
+                elif meses_restantes > 0:
+                    edad_detallada = f"{meses_restantes} meses"
+                    if dias_restantes > 0:
+                        edad_detallada += f", {dias_restantes} días"
+                else:
+                    edad_detallada = f"{dias_restantes} días"
+                    
+            except Exception as e:
+                fecha_nacimiento = 'No registrada'
+                edad_detallada = 'No registrada'
+        
         fecha_ultima_edicion = 'No registrada'
-        if postulante_completo[17]:  # fecha_ultima_edicion (índice 17)
+        if postulante_completo[17]:
             try:
                 if isinstance(postulante_completo[17], str):
-                    # Si es string, convertir a objeto datetime
                     from datetime import datetime
                     fecha_obj = datetime.strptime(postulante_completo[17], "%Y-%m-%d %H:%M:%S")
                     fecha_ultima_edicion = fecha_obj.strftime('%d/%m/%Y %H:%M')
                 else:
-                    # Si es objeto datetime
                     fecha_ultima_edicion = postulante_completo[17].strftime('%d/%m/%Y %H:%M')
             except:
                 fecha_ultima_edicion = 'No registrada'
         
-        # Construir el texto de información base
-        info_text = f"""
-        INFORMACIÓN PERSONAL:
-        Nombre: {postulante_completo[1]}
-        Apellido: {postulante_completo[2]}
-        Cédula: {postulante_completo[3]}
-        Fecha de Nacimiento: {fecha_nacimiento}
-        Teléfono: {postulante_completo[5] or 'No registrado'}
-        Edad: {postulante_completo[8] or 'No registrada'}
+        # SECCIÓN 1 - INFORMACIÓN DEL POSTULANTE
+        personal_frame = ttk.Frame(scrollable_frame, style='Card.TFrame')
+        personal_frame.pack(fill='x', pady=(0, 15), padx=10)
         
-        INFORMACIÓN DE REGISTRO:
-        Fecha de Registro: {postulante_completo[6].strftime('%d/%m/%Y') if postulante_completo[6] else 'No registrada'}
-        Registrado por: {nombre_registrador}
-        Aparato Biométrico - Dedo: {nombre_aparato} - {postulante_completo[10] or 'No especificado'}
-        """
+        # Título de sección
+        ttk.Label(personal_frame, text="INFORMACIÓN DEL POSTULANTE", style='Section.TLabel').pack(anchor='w', padx=20, pady=(15, 10))
         
-        # Agregar información de última edición solo si existe información válida de edición
-        # Solo mostrar si hay un usuario que editó (no solo fecha)
-        if postulante_completo[16] and postulante_completo[16].strip():  # usuario_ultima_edicion no vacío
-            info_text += f"""
+        # Contenido de información personal
+        personal_content = ttk.Frame(personal_frame, style='Card.TFrame')
+        personal_content.pack(fill='x', padx=25, pady=(0, 15))
         
-        INFORMACIÓN DE ÚLTIMA EDICIÓN:
-        Última edición por: {postulante_completo[16]}
-        Fecha de última edición: {fecha_ultima_edicion}
-        """
+        personal_content.columnconfigure(1, weight=1, minsize=200)
+        personal_content.columnconfigure(3, weight=1, minsize=200)
         
-        # Agregar información adicional
-        info_text += f"""
+        # Nombre
+        ttk.Label(personal_content, text="Nombre:", style='Info.TLabel').grid(row=0, column=0, sticky='w', padx=(0, 10), pady=5)
+        ttk.Label(personal_content, text=postulante_completo[1], style='Value.TLabel').grid(row=0, column=1, sticky='w', pady=5)
         
-        INFORMACIÓN ADICIONAL:
-        Unidad: {postulante_completo[9] or 'No especificada'}
-        Observaciones: {postulante_completo[15] or 'Sin observaciones'}
-        """
+        # Apellido
+        ttk.Label(personal_content, text="Apellido:", style='Info.TLabel').grid(row=0, column=2, sticky='w', padx=(20, 10), pady=5)
+        ttk.Label(personal_content, text=postulante_completo[2], style='Value.TLabel').grid(row=0, column=3, sticky='w', pady=5)
         
-        text_widget = tk.Text(main_frame, wrap='word', padx=20, pady=20, 
-                             font=('Segoe UI', 10), relief='flat', bg='#f8f9fa')
-        text_widget.pack(expand=True, fill='both')
-        text_widget.insert('1.0', info_text)
-        text_widget.config(state='disabled')
+        # Cédula
+        ttk.Label(personal_content, text="Cédula:", style='Info.TLabel').grid(row=1, column=0, sticky='w', padx=(0, 10), pady=5)
+        ttk.Label(personal_content, text=str(postulante_completo[3]), style='Value.TLabel').grid(row=1, column=1, sticky='w', pady=5)
+        
+        # Fecha de nacimiento
+        ttk.Label(personal_content, text="Fecha de Nacimiento:", style='Info.TLabel').grid(row=1, column=2, sticky='w', padx=(20, 10), pady=5)
+        ttk.Label(personal_content, text=fecha_nacimiento, style='Value.TLabel').grid(row=1, column=3, sticky='w', pady=5)
+        
+        # Edad
+        ttk.Label(personal_content, text="Edad:", style='Info.TLabel').grid(row=2, column=0, sticky='w', padx=(0, 10), pady=5)
+        ttk.Label(personal_content, text=edad_detallada, style='Value.TLabel').grid(row=2, column=1, sticky='w', pady=5)
+        
+        # Teléfono
+        ttk.Label(personal_content, text="Teléfono:", style='Info.TLabel').grid(row=2, column=2, sticky='w', padx=(20, 10), pady=5)
+        ttk.Label(personal_content, text=str(postulante_completo[5] or 'No registrado'), style='Value.TLabel').grid(row=2, column=3, sticky='w', pady=5)
+        
+
+        
+
+        
+        # SECCIÓN 2 - INFORMACIÓN DE REGISTRO
+        registro_frame = ttk.Frame(scrollable_frame, style='Card.TFrame')
+        registro_frame.pack(fill='x', pady=(0, 15), padx=10)
+        
+        # Título de sección
+        ttk.Label(registro_frame, text="INFORMACIÓN DE REGISTRO", style='Section.TLabel').pack(anchor='w', padx=20, pady=(15, 10))
+        
+        # Contenido de registro
+        registro_content = ttk.Frame(registro_frame, style='Card.TFrame')
+        registro_content.pack(fill='x', padx=25, pady=(0, 15))
+        
+        registro_content.columnconfigure(1, weight=1, minsize=200)
+        registro_content.columnconfigure(3, weight=1, minsize=200)
+        
+        # Fecha de registro
+        ttk.Label(registro_content, text="Fecha de Registro:", style='Info.TLabel').grid(row=0, column=0, sticky='w', padx=(0, 10), pady=5)
+        fecha_registro = postulante_completo[6].strftime('%d/%m/%Y') if postulante_completo[6] else 'No registrada'
+        ttk.Label(registro_content, text=fecha_registro, style='Value.TLabel').grid(row=0, column=1, sticky='w', pady=5)
+        
+        # Registrado por
+        ttk.Label(registro_content, text="Registrado por:", style='Info.TLabel').grid(row=0, column=2, sticky='w', padx=(20, 10), pady=5)
+        ttk.Label(registro_content, text=nombre_registrador, style='Value.TLabel').grid(row=0, column=3, sticky='w', pady=5)
+        
+        # Aparato biométrico
+        ttk.Label(registro_content, text="Aparato Biométrico:", style='Info.TLabel').grid(row=1, column=0, sticky='w', padx=(0, 10), pady=5)
+        ttk.Label(registro_content, text=nombre_aparato, style='Value.TLabel').grid(row=1, column=1, sticky='w', pady=5)
+        
+        # Dedo registrado
+        ttk.Label(registro_content, text="Dedo Registrado:", style='Info.TLabel').grid(row=1, column=2, sticky='w', padx=(20, 10), pady=5)
+        ttk.Label(registro_content, text=str(postulante_completo[10] or 'No especificado'), style='Value.TLabel').grid(row=1, column=3, sticky='w', pady=5)
+        
+        # UID K40 (si existe)
+        if postulante_completo[13]:  # uid_k40
+            ttk.Label(registro_content, text="UID K40:", style='Info.TLabel').grid(row=2, column=0, sticky='w', padx=(0, 10), pady=5)
+            ttk.Label(registro_content, text=str(postulante_completo[13]), style='Value.TLabel').grid(row=2, column=1, sticky='w', pady=5)
+        
+        # Unidad de inscripción
+        ttk.Label(registro_content, text="Unidad de Inscripción:", style='Info.TLabel').grid(row=2, column=0, sticky='w', padx=(0, 10), pady=5)
+        ttk.Label(registro_content, text=str(postulante_completo[9] or 'No especificada'), style='Value.TLabel').grid(row=2, column=1, sticky='w', pady=5)
+        
+        # UID K40 (si existe)
+        if postulante_completo[13]:  # uid_k40
+            ttk.Label(registro_content, text="UID K40:", style='Info.TLabel').grid(row=3, column=0, sticky='w', padx=(0, 10), pady=5)
+            ttk.Label(registro_content, text=str(postulante_completo[13]), style='Value.TLabel').grid(row=3, column=1, sticky='w', pady=5)
+        
+        # Huella dactilar (si existe)
+        if postulante_completo[14]:  # huella_dactilar
+            ttk.Label(registro_content, text="Huella Dactilar:", style='Info.TLabel').grid(row=3, column=2, sticky='w', padx=(20, 10), pady=5)
+            ttk.Label(registro_content, text="Registrada", style='Value.TLabel').grid(row=3, column=3, sticky='w', pady=5)
+        
+        # SECCIÓN 3 - Información de Última Edición (solo si existe)
+        if postulante_completo[16] and postulante_completo[16].strip():
+            edicion_frame = ttk.Frame(scrollable_frame, style='Card.TFrame')
+            edicion_frame.pack(fill='x', pady=(0, 15), padx=10)
+            
+            # Título de sección
+            ttk.Label(edicion_frame, text="INFORMACIÓN DE ÚLTIMA EDICIÓN", style='Section.TLabel').pack(anchor='w', padx=20, pady=(15, 10))
+            
+            # Contenido de edición
+            edicion_content = ttk.Frame(edicion_frame, style='Card.TFrame')
+            edicion_content.pack(fill='x', padx=25, pady=(0, 15))
+            
+            edicion_content.columnconfigure(1, weight=1, minsize=200)
+            edicion_content.columnconfigure(3, weight=1, minsize=200)
+            
+            # Usuario que editó
+            ttk.Label(edicion_content, text="Editado por:", style='Info.TLabel').grid(row=0, column=0, sticky='w', padx=(0, 10), pady=5)
+            ttk.Label(edicion_content, text=postulante_completo[16], style='Value.TLabel').grid(row=0, column=1, sticky='w', pady=5)
+            
+            # Fecha de edición
+            ttk.Label(edicion_content, text="Fecha de Edición:", style='Info.TLabel').grid(row=0, column=2, sticky='w', padx=(20, 10), pady=5)
+            ttk.Label(edicion_content, text=fecha_ultima_edicion, style='Value.TLabel').grid(row=0, column=3, sticky='w', pady=5)
+        
+        # SECCIÓN 4 - Información Adicional
+        adicional_frame = ttk.Frame(scrollable_frame, style='Card.TFrame')
+        adicional_frame.pack(fill='x', pady=(0, 15), padx=10)
+        
+        # Título de sección
+        ttk.Label(adicional_frame, text="INFORMACIÓN ADICIONAL", style='Section.TLabel').pack(anchor='w', padx=20, pady=(15, 10))
+        
+        # Contenido adicional
+        adicional_content = ttk.Frame(adicional_frame, style='Card.TFrame')
+        adicional_content.pack(fill='x', padx=25, pady=(0, 15))
+        
+        # Observaciones (puede ser largo, usar frame separado)
+        ttk.Label(adicional_content, text="Observaciones:", style='Info.TLabel').pack(anchor='w', pady=(0, 5))
+        
+        observaciones_text = tk.Text(adicional_content, height=4, wrap='word', 
+                                   font=('Segoe UI', 10), relief='flat', 
+                                   bg='#f8f9fa', fg='#2c3e50', padx=10, pady=10)
+        observaciones_text.pack(fill='x', pady=(0, 10))
+        observaciones_text.insert('1.0', str(postulante_completo[15] or 'Sin observaciones'))
+        observaciones_text.config(state='disabled')
+        
+        # Botón de cerrar
+        button_frame = ttk.Frame(scrollable_frame, style='Details.TFrame')
+        button_frame.pack(fill='x', pady=(20, 0), padx=10)
+        
+        close_button = ttk.Button(button_frame, text="Cerrar", 
+                                 command=details_window.destroy,
+                                 style='Accent.TButton')
+        close_button.pack(pady=10)
+        
+        # Configurar scroll con mouse
+        def _on_mousewheel(event):
+            main_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        main_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        
+        # Limpiar binding cuando se cierre la ventana
+        def on_closing():
+            main_canvas.unbind_all("<MouseWheel>")
+            details_window.destroy()
+        
+        details_window.protocol("WM_DELETE_WINDOW", on_closing)
+        
+        # Configurar tamaño con ancho ajustable y altura fija
+        details_window.update_idletasks()
+        
+        # Calcular el ancho necesario basado en el contenido
+        content_width = scrollable_frame.winfo_reqwidth() + 120  # Agregar más espacio para scrollbar y padding
+        max_width = min(content_width, 1440)  # Aumentar máximo a 1100px de ancho
+        min_width = 700  # Aumentar mínimo a 700px de ancho
+        final_width = max(min_width, max_width)
+        
+        # Altura fija
+        max_height = 600
+        
+        # Aplicar el tamaño
+        details_window.geometry(f"{final_width}x{max_height}")
+        
+        # Centrar la ventana
+        x = (details_window.winfo_screenwidth() // 2) - (final_width // 2)
+        y = (details_window.winfo_screenheight() // 2) - (max_height // 2)
+        details_window.geometry(f"{final_width}x{max_height}+{x}+{y}")
+        
+        # Configurar scroll para que funcione correctamente
+        def configure_scroll(event):
+            main_canvas.configure(scrollregion=main_canvas.bbox("all"))
+        
+        scrollable_frame.bind("<Configure>", configure_scroll)
+        
+        # Configurar el canvas para que se expanda correctamente
+        main_canvas.configure(scrollregion=main_canvas.bbox("all"))
+        
+        # Asegurar que el scroll funcione con el mouse
+        def _on_mousewheel(event):
+            main_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        # Vincular el scroll del mouse al canvas
+        main_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        
+        # Configurar el scroll para que funcione con las teclas
+        def _on_key_press(event):
+            if event.keysym == "Up":
+                main_canvas.yview_scroll(-1, "units")
+            elif event.keysym == "Down":
+                main_canvas.yview_scroll(1, "units")
+            elif event.keysym == "Page_Up":
+                main_canvas.yview_scroll(-1, "pages")
+            elif event.keysym == "Page_Down":
+                main_canvas.yview_scroll(1, "pages")
+        
+        main_canvas.bind_all("<Key>", _on_key_press)
         
     def edit_postulante(self, values):
         """Editar postulante"""
         if not values:
+            return
+        
+        # Verificar privilegios para editar
+        from privilegios_utils import puede_editar_postulante
+        from database import obtener_postulante_por_id
+        
+        # Obtener datos del postulante para verificar permisos
+        postulante_id = None
+        for postulante in self.all_postulantes:
+            if (postulante[1] == values[1] and  # nombre
+                postulante[2] == values[2] and  # apellido
+                postulante[3] == values[3]):    # cédula
+                postulante_id = postulante[0]
+                break
+        
+        if not postulante_id:
+            # Intentar buscar por cédula directamente en la base de datos
+            from database import buscar_postulante
+            # Convertir cédula a string para evitar errores de tipo
+            cedula_str = str(values[3]) if values[3] is not None else ""
+            resultados = buscar_postulante(cedula=cedula_str)
+            if resultados:
+                postulante_id = resultados[0][0]  # Tomar el primer resultado
+            else:
+                messagebox.showerror("Error", "No se pudo identificar el postulante")
+                return
+        
+        # Obtener datos completos del postulante
+        postulante_data = obtener_postulante_por_id(postulante_id)
+        if not postulante_data:
+            messagebox.showerror("Error", "No se pudo obtener la información del postulante")
+            return
+        
+        # Crear diccionario con datos del postulante para verificación
+        postulante_dict = {
+            'id': postulante_data[0],
+            'usuario_registrador': postulante_data[7]  # usuario_registrador
+        }
+        
+        # Verificar si puede editar este postulante
+        if not puede_editar_postulante(self.user_data, postulante_dict):
             return
             
         # Encontrar el ID del postulante
@@ -513,7 +771,9 @@ class BuscarPostulantes(tk.Toplevel):
         if not postulante_id:
             # Intentar buscar por cédula directamente en la base de datos
             from database import buscar_postulante
-            resultados = buscar_postulante(cedula=values[3])
+            # Convertir cédula a string para evitar errores de tipo
+            cedula_str = str(values[3]) if values[3] is not None else ""
+            resultados = buscar_postulante(cedula=cedula_str)
             if resultados:
                 postulante_id = resultados[0][0]  # Tomar el primer resultado
             else:
@@ -533,6 +793,47 @@ class BuscarPostulantes(tk.Toplevel):
         """Eliminar postulante"""
         if not values:
             return
+        
+        # Verificar privilegios para eliminar
+        from privilegios_utils import puede_eliminar_postulante
+        from database import obtener_postulante_por_id
+        
+        # Obtener datos del postulante para verificar permisos
+        postulante_id = None
+        for postulante in self.all_postulantes:
+            if (postulante[1] == values[1] and  # nombre
+                postulante[2] == values[2] and  # apellido
+                postulante[3] == values[3]):    # cédula
+                postulante_id = postulante[0]
+                break
+        
+        if not postulante_id:
+            # Intentar buscar por cédula directamente en la base de datos
+            from database import buscar_postulante
+            # Convertir cédula a string para evitar errores de tipo
+            cedula_str = str(values[3]) if values[3] is not None else ""
+            resultados = buscar_postulante(cedula=cedula_str)
+            if resultados:
+                postulante_id = resultados[0][0]  # Tomar el primer resultado
+            else:
+                messagebox.showerror("Error", "No se pudo identificar el postulante")
+                return
+        
+        # Obtener datos completos del postulante
+        postulante_data = obtener_postulante_por_id(postulante_id)
+        if not postulante_data:
+            messagebox.showerror("Error", "No se pudo obtener la información del postulante")
+            return
+        
+        # Crear diccionario con datos del postulante para verificación
+        postulante_dict = {
+            'id': postulante_data[0],
+            'usuario_registrador': postulante_data[7]  # usuario_registrador
+        }
+        
+        # Verificar si puede eliminar este postulante
+        if not puede_eliminar_postulante(self.user_data, postulante_dict):
+            return
             
         # Encontrar el ID del postulante
         postulante_id = None
@@ -546,7 +847,9 @@ class BuscarPostulantes(tk.Toplevel):
         if not postulante_id:
             # Intentar buscar por cédula directamente en la base de datos
             from database import buscar_postulante
-            resultados = buscar_postulante(cedula=values[3])
+            # Convertir cédula a string para evitar errores de tipo
+            cedula_str = str(values[3]) if values[3] is not None else ""
+            resultados = buscar_postulante(cedula=cedula_str)
             if resultados:
                 postulante_id = resultados[0][0]  # Tomar el primer resultado
             else:

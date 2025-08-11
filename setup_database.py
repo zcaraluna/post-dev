@@ -222,25 +222,179 @@ class DatabaseSetupWindow:
         """Ejecutar la ventana"""
         self.root.mainloop()
 
+def crear_tabla_comunicados():
+    """Crear tabla para comunicados del sistema"""
+    try:
+        conn = psycopg2.connect(
+            dbname=self.db_name_var.get(), # Usar la base de datos configurada
+            user=self.user_var.get(),
+            password=self.password_var.get(),
+            host=self.host_var.get(),
+            port=self.port_var.get()
+        )
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        # Verificar si la tabla ya existe
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'comunicados'
+            );
+        """)
+        
+        if cursor.fetchone()[0]:
+            print("✅ Tabla 'comunicados' ya existe")
+            conn.close()
+            return True
+        
+        # Crear tabla comunicados
+        cursor.execute("""
+            CREATE TABLE comunicados (
+                id SERIAL PRIMARY KEY,
+                titulo VARCHAR(200) NOT NULL,
+                mensaje TEXT NOT NULL,
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_expiracion TIMESTAMP,
+                creado_por INTEGER REFERENCES usuarios(id),
+                activo BOOLEAN DEFAULT TRUE,
+                prioridad VARCHAR(20) DEFAULT 'normal' CHECK (prioridad IN ('baja', 'normal', 'alta', 'urgente'))
+            );
+        """)
+        
+        # Crear tabla para seguimiento de lectura de comunicados
+        cursor.execute("""
+            CREATE TABLE comunicados_leidos (
+                id SERIAL PRIMARY KEY,
+                comunicado_id INTEGER REFERENCES comunicados(id) ON DELETE CASCADE,
+                usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+                fecha_lectura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(comunicado_id, usuario_id)
+            );
+        """)
+        
+        conn.commit()
+        conn.close()
+        print("✅ Tabla 'comunicados' creada exitosamente")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error al crear tabla comunicados: {e}")
+        if conn:
+            conn.close()
+        return False
+
+def crear_tabla_comentarios():
+    """Crear tabla para comentarios de usuarios"""
+    try:
+        conn = psycopg2.connect(
+            dbname=self.db_name_var.get(), # Usar la base de datos configurada
+            user=self.user_var.get(),
+            password=self.password_var.get(),
+            host=self.host_var.get(),
+            port=self.port_var.get()
+        )
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        # Verificar si la tabla ya existe
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'comentarios'
+            );
+        """)
+        
+        if cursor.fetchone()[0]:
+            print("✅ Tabla 'comentarios' ya existe")
+            conn.close()
+            return True
+        
+        # Crear tabla comentarios
+        cursor.execute("""
+            CREATE TABLE comentarios (
+                id SERIAL PRIMARY KEY,
+                usuario_id INTEGER REFERENCES usuarios(id),
+                nombre_usuario VARCHAR(100),
+                email VARCHAR(100),
+                asunto VARCHAR(200) NOT NULL,
+                mensaje TEXT NOT NULL,
+                fecha_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'en_revision', 'respondido', 'cerrado')),
+                respuesta TEXT,
+                fecha_respuesta TIMESTAMP,
+                respondido_por INTEGER REFERENCES usuarios(id)
+            );
+        """)
+        
+        conn.commit()
+        conn.close()
+        print("✅ Tabla 'comentarios' creada exitosamente")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error al crear tabla comentarios: {e}")
+        if conn:
+            conn.close()
+        return False
+
 def main():
-    """Función principal"""
-    print("🔧 Configuración de Base de Datos PostgreSQL")
-    print("=" * 50)
+    """Función principal para configurar la base de datos"""
+    print("🚀 Configurando base de datos del sistema...")
     
-    # Verificar si PostgreSQL está instalado
-    installed, version = check_postgresql_installed()
-    
-    if not installed:
-        print(f"❌ PostgreSQL no está instalado: {version}")
-        print("💡 Instale PostgreSQL desde: https://www.postgresql.org/download/")
-        print("   Luego ejecute este script nuevamente")
+    # Crear tablas principales
+    if crear_tabla_usuarios():
+        print("✅ Tabla usuarios configurada")
+    else:
+        print("❌ Error al configurar tabla usuarios")
         return
     
-    print(f"✅ PostgreSQL encontrado: {version}")
+    if crear_tabla_postulantes():
+        print("✅ Tabla postulantes configurada")
+    else:
+        print("❌ Error al configurar tabla postulantes")
+        return
     
-    # Abrir ventana de configuración
-    app = DatabaseSetupWindow()
-    app.run()
+    if crear_tabla_aparatos():
+        print("✅ Tabla aparatos configurada")
+    else:
+        print("❌ Error al configurar tabla aparatos")
+        return
+    
+    # Crear tablas nuevas
+    if crear_tabla_comunicados():
+        print("✅ Tabla comunicados configurada")
+    else:
+        print("❌ Error al configurar tabla comunicados")
+        return
+    
+    if crear_tabla_comentarios():
+        print("✅ Tabla comentarios configurada")
+    else:
+        print("❌ Error al configurar tabla comentarios")
+        return
+    
+    # Crear usuario admin por defecto
+    if crear_usuario_admin():
+        print("✅ Usuario admin creado")
+    else:
+        print("❌ Error al crear usuario admin")
+        return
+    
+    print("\n🎉 ¡Base de datos configurada exitosamente!")
+    print("📋 Tablas creadas:")
+    print("   - usuarios")
+    print("   - postulantes") 
+    print("   - aparatos_biometricos")
+    print("   - comunicados")
+    print("   - comentarios")
+    print("\n👤 Usuario admin creado:")
+    print("   Usuario: admin")
+    print("   Contraseña: admin123")
 
 if __name__ == "__main__":
     main() 

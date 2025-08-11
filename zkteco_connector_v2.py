@@ -81,6 +81,21 @@ class ZKTecoK40V2:
             logger.error(f"Error al reconectar: {e}")
             return False
     
+    def is_alive(self) -> bool:
+        """
+        Verificar si la conexión actual sigue viva con una llamada ligera.
+        Returns:
+            bool: True si la conexión responde, False en caso contrario
+        """
+        try:
+            if not self.conn:
+                return False
+            # Llamada ligera; si falla, consideramos desconectado
+            _ = self.conn.get_firmware_version()
+            return True
+        except Exception:
+            return False
+    
     def get_device_info(self) -> Dict[str, Any]:
         """
         Obtener información del dispositivo

@@ -3,13 +3,13 @@
 Utilidades para configurar iconos en ventanas tkinter
 """
 
-def set_window_icon(window, icon_filename="quira.png", large_icon=True):
+def set_window_icon(window, icon_filename="quiraXXXL.png", large_icon=True):
     """
     Configurar icono para una ventana tkinter
     
     Args:
         window: Ventana tkinter (Tk o Toplevel)
-        icon_filename: Nombre del archivo de icono (por defecto "quira.png")
+        icon_filename: Nombre del archivo de icono (por defecto "quiraXXXL.png")
         large_icon: Si True, usa tamaños más grandes para mejor visibilidad
     """
     try:
@@ -59,13 +59,13 @@ def set_window_icon(window, icon_filename="quira.png", large_icon=True):
         print(f"⚠️ No se pudo cargar el icono: {e}")
         return False
 
-def set_extra_large_icon(window, icon_filename="quira.png"):
+def set_extra_large_icon(window, icon_filename="quiraXXXL.png"):
     """
     Configurar icono extra grande para ventanas principales
     
     Args:
         window: Ventana tkinter (Tk o Toplevel)
-        icon_filename: Nombre del archivo de icono (por defecto "quira.png")
+        icon_filename: Nombre del archivo de icono (por defecto "quiraXXXL.png")
     """
     try:
         from PIL import Image, ImageTk
@@ -107,13 +107,13 @@ def set_extra_large_icon(window, icon_filename="quira.png"):
         print(f"⚠️ No se pudo cargar el icono extra grande: {e}")
         return False
 
-def set_large_256_icon(window, icon_filename="quira.png"):
+def set_large_256_icon(window, icon_filename="quiraXXXL.png"):
     """
     Configurar icono de 256 píxeles como tamaño principal
     
     Args:
         window: Ventana tkinter (Tk o Toplevel)
-        icon_filename: Nombre del archivo de icono (por defecto "quira.png")
+        icon_filename: Nombre del archivo de icono (por defecto "quiraXXXL.png")
     """
     try:
         from PIL import Image, ImageTk

@@ -1026,28 +1026,46 @@ class AgregarPostulante(tk.Toplevel):
             return
 
         self.mostrar_estado("Guardando datos en base de datos...")
-        conn = connect_db()
-        cursor = conn.cursor()
+        
+        # Usar la función de database.py que copia automáticamente el nombre del registrador
+        from database import agregar_postulante
+        
+        postulante_data = {
+            'nombre': nombre,
+            'apellido': apellido,
+            'cedula': cedula,
+            'fecha_nacimiento': fecha_nacimiento,
+            'telefono': telefono,
+            'fecha_registro': fecha_registro,
+            'usuario_registrador': self.usuario_registrador,
+            'nombre_registrador': self.registrador_string,  # Enviar el nombre completo directamente
+            'edad': edad,
+            'sexo': sexo,
+            'unidad': unidad,
+            'dedo_registrado': dedo_registrado,
+            'aparato_id': aparato_id,
+            'uid_k40': usuario_uid
+        }
+        
         try:
-            cursor.execute("""
-                INSERT INTO postulantes
-                (nombre, apellido, cedula, fecha_nacimiento, telefono, fecha_registro, usuario_registrador, edad, sexo, unidad, dedo_registrado, registrado_por, aparato_id, uid_k40)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (nombre, apellido, cedula, fecha_nacimiento, telefono, fecha_registro, self.usuario_registrador, edad, sexo, unidad, dedo_registrado, registrado_por, aparato_id, usuario_uid))
-            conn.commit()
-
-            # Obtener el nombre del aparato biométrico
-            cursor.execute("SELECT nombre FROM aparatos_biometricos WHERE id = %s", (aparato_id,))
-            aparato_nombre = cursor.fetchone()
-            aparato_nombre = aparato_nombre[0] if aparato_nombre else "Aparato Desconocido"
+            if agregar_postulante(postulante_data):
+                # Obtener el nombre del aparato biométrico
+                conn = connect_db()
+                cursor = conn.cursor()
+                cursor.execute("SELECT nombre FROM aparatos_biometricos WHERE id = %s", (aparato_id,))
+                aparato_nombre = cursor.fetchone()
+                aparato_nombre = aparato_nombre[0] if aparato_nombre else "Aparato Desconocido"
+                cursor.close()
+                conn.close()
+            else:
+                self.ocultar_estado()
+                messagebox.showerror("Error", "No se pudo guardar en la base de datos")
+                return
 
         except Exception as e:
             self.ocultar_estado()
             messagebox.showerror("Error", f"No se pudo guardar en la base de datos: {e}")
             return
-        finally:
-            cursor.close()
-            conn.close()
 
         # MENSAJE DE ÉXITO Y CERRAR VENTANA
         self.ocultar_estado()
