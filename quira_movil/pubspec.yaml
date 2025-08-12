@@ -1,0 +1,69 @@
+name: quira_mobile_app
+description: QUIRA Móvil - Sistema de Búsqueda de Postulantes
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Base de datos y conexión
+  postgres: ^2.6.3
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  
+  # Gestión de estado
+  provider: ^6.1.1
+  
+  # UI y componentes
+  cupertino_icons: ^1.0.2
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.0
+  
+  # Utilidades
+  intl: ^0.18.1
+  shared_preferences: ^2.2.2
+  http: ^1.1.0
+  uuid: ^4.2.1
+  
+  # Validaciones
+  form_validator: ^2.1.1
+  
+  # Criptografía
+  bcrypt: ^1.1.3
+  
+  # Iconos adicionales
+  font_awesome_flutter: ^10.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/quira_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/images/quira_icon.png"
+    background_color: "#2E5090"
+    theme_color: "#2E5090"
+  windows:
+    generate: true
+    image_path: "assets/images/quira_icon.png"
+    icon_size: 48
+  macos:
+    generate: true
+    image_path: "assets/images/quira_icon.png"

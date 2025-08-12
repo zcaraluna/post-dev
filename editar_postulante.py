@@ -19,7 +19,7 @@ except:
         pass
 
 class EditarPostulante(tk.Toplevel):
-    def __init__(self, parent, user_data, postulante_id):
+    def __init__(self, parent, user_data, postulante_id, callback=None):
         super().__init__(parent)
         self.title("Editar Postulante - Sistema QUIRA")
         self.geometry("")
@@ -33,6 +33,7 @@ class EditarPostulante(tk.Toplevel):
         self.user_data = user_data
         self.postulante_id = postulante_id
         self.postulante_data = None
+        self.callback = callback  # Callback para notificar cuando se complete la edición
         
         # Cargar datos del postulante
         self.cargar_datos_postulante()
@@ -320,10 +321,16 @@ class EditarPostulante(tk.Toplevel):
 
     def crear_campo_texto(self, parent, label_text, variable, row):
         """Crear campo de texto multilínea"""
-        # Label
-        label = tk.Label(parent, text=label_text, 
-                         font=('Segoe UI', 10, 'bold'), 
-                         fg='#2c3e50', bg='white', anchor='w')
+        # Label con información adicional para observaciones
+        if "observaciones" in label_text.lower():
+            label_text_with_info = f"{label_text} (Se agregarán a las existentes)"
+            label = tk.Label(parent, text=label_text_with_info, 
+                             font=('Segoe UI', 10, 'bold'), 
+                             fg='#2c3e50', bg='white', anchor='w')
+        else:
+            label = tk.Label(parent, text=label_text, 
+                             font=('Segoe UI', 10, 'bold'), 
+                             fg='#2c3e50', bg='white', anchor='w')
         label.grid(row=row, column=0, sticky='w', pady=8, padx=10)
         
         # Text widget
@@ -338,9 +345,79 @@ class EditarPostulante(tk.Toplevel):
         scrollbar.grid(row=row, column=4, sticky='ns', pady=8)
         text_widget.configure(yscrollcommand=scrollbar.set)
         
+        # Botón para ver observaciones existentes (solo para observaciones)
+        if "observaciones" in label_text.lower():
+            def mostrar_observaciones_existentes():
+                observaciones_existentes = getattr(self, 'postulante_data', None)
+                if observaciones_existentes and observaciones_existentes[15]:
+                    # Crear ventana para mostrar observaciones existentes
+                    ventana_obs = tk.Toplevel(self)
+                    ventana_obs.title("Observaciones Existentes")
+                    ventana_obs.geometry("500x400")
+                    ventana_obs.transient(self)
+                    ventana_obs.grab_set()
+                    ventana_obs.configure(bg='#f0f0f0')
+                    
+                    # Frame principal
+                    main_frame = tk.Frame(ventana_obs, bg='#f0f0f0', padx=20, pady=20)
+                    main_frame.pack(expand=True, fill='both')
+                    
+                    # Título
+                    titulo = tk.Label(main_frame, text="Observaciones Existentes", 
+                                      font=('Segoe UI', 14, 'bold'), 
+                                      fg='#2c3e50', bg='#f0f0f0')
+                    titulo.pack(pady=(0, 15))
+                    
+                    # Área de texto para mostrar observaciones
+                    text_area = tk.Text(main_frame, wrap='word', font=('Segoe UI', 10),
+                                       relief='solid', bd=1, bg='white', fg='#2c3e50')
+                    text_area.pack(expand=True, fill='both', pady=(0, 15))
+                    
+                    # Insertar observaciones existentes
+                    text_area.insert('1.0', observaciones_existentes[15])
+                    text_area.config(state='disabled')  # Solo lectura
+                    
+                    # Botón cerrar
+                    tk.Button(main_frame, text="Cerrar", command=ventana_obs.destroy,
+                              font=('Segoe UI', 10, 'bold'), fg='white', bg='#3498db',
+                              relief='flat', padx=20, pady=5).pack()
+                else:
+                    messagebox.showinfo("Observaciones", "No hay observaciones existentes para este postulante.")
+            
+            # Botón para ver observaciones existentes
+            btn_ver_obs = tk.Button(parent, text="📋 Ver existentes", 
+                                   command=mostrar_observaciones_existentes,
+                                   font=('Segoe UI', 8), fg='white', bg='#95a5a6',
+                                   relief='flat', padx=10, pady=2)
+            btn_ver_obs.grid(row=row+1, column=1, sticky='w', pady=(0, 8), padx=(0, 10))
+        
+        # Placeholder para observaciones
+        if "observaciones" in label_text.lower():
+            placeholder_text = "Escriba aquí las nuevas observaciones...\n(Se agregarán automáticamente a las observaciones existentes)"
+            text_widget.insert('1.0', placeholder_text)
+            text_widget.config(fg='gray')
+            
+            def on_focus_in(event):
+                if text_widget.get('1.0', tk.END).strip() == placeholder_text:
+                    text_widget.delete('1.0', tk.END)
+                    text_widget.config(fg='black')
+            
+            def on_focus_out(event):
+                if not text_widget.get('1.0', tk.END).strip():
+                    text_widget.insert('1.0', placeholder_text)
+                    text_widget.config(fg='gray')
+            
+            text_widget.bind('<FocusIn>', on_focus_in)
+            text_widget.bind('<FocusOut>', on_focus_out)
+        
         # Vincular con la variable
         def update_variable(*args):
-            variable.set(text_widget.get('1.0', tk.END).strip())
+            current_text = text_widget.get('1.0', tk.END).strip()
+            # No incluir el placeholder en la variable
+            if "observaciones" in label_text.lower() and current_text == placeholder_text:
+                variable.set('')
+            else:
+                variable.set(current_text)
         
         text_widget.bind('<KeyRelease>', update_variable)
         
@@ -537,7 +614,9 @@ class EditarPostulante(tk.Toplevel):
         self.entry_edad.set(str(self.postulante_data[8]) if self.postulante_data[8] else '')  # edad (índice 8)
         self.entry_unidad.set(self.postulante_data[9] or '')  # unidad (índice 9)
         self.entry_dedo.set(self.postulante_data[10] or '')  # dedo_registrado (índice 10)
-        self.entry_observaciones.set(self.postulante_data[15] or '')  # observaciones (índice 15)
+        # Para observaciones, no cargar en el campo de texto (se mostrarán en el placeholder)
+        # Las observaciones existentes se mantienen en self.postulante_data[15]
+        self.entry_observaciones.set('')  # Campo vacío para nuevas observaciones
         
         # Cargar fecha de nacimiento
         if self.postulante_data[4]:  # fecha_nacimiento
@@ -589,6 +668,34 @@ class EditarPostulante(tk.Toplevel):
             messagebox.showerror("Error", "Formato de fecha de nacimiento incorrecto.")
             return
 
+        # Manejar observaciones de manera inteligente
+        observaciones_actuales = self.postulante_data[15] or ''  # Observaciones existentes
+        nuevas_observaciones = observaciones.strip()
+        
+        # Obtener información del usuario actual
+        nombre_usuario = f"{self.user_data.get('nombre', '')} {self.user_data.get('apellido', '')}".strip()
+        timestamp = datetime.now().strftime('%d/%m/%Y %H:%M')
+        
+        # Si hay observaciones existentes y nuevas observaciones
+        if observaciones_actuales and nuevas_observaciones:
+            # Verificar si las nuevas observaciones ya están incluidas
+            if nuevas_observaciones not in observaciones_actuales:
+                # Agregar las nuevas observaciones con formato mejorado
+                nueva_obs_formateada = f"[{timestamp}] {nombre_usuario}:\n{nuevas_observaciones}"
+                observaciones_finales = f"{observaciones_actuales}\n\n{nueva_obs_formateada}"
+            else:
+                # Si ya están incluidas, mantener las existentes
+                observaciones_finales = observaciones_actuales
+        elif observaciones_actuales:
+            # Solo hay observaciones existentes
+            observaciones_finales = observaciones_actuales
+        elif nuevas_observaciones:
+            # Solo hay nuevas observaciones (primera observación)
+            observaciones_finales = f"[{timestamp}] {nombre_usuario}:\n{nuevas_observaciones}"
+        else:
+            # No hay observaciones
+            observaciones_finales = ''
+        
         # Preparar datos para actualización
         postulante_data = {
             'nombre': nombre,
@@ -599,12 +706,24 @@ class EditarPostulante(tk.Toplevel):
             'edad': int(edad) if edad and edad.isdigit() else None,
             'unidad': unidad,
             'dedo_registrado': dedo_registrado,
-            'observaciones': observaciones
+            'observaciones': observaciones_finales
         }
 
         # Actualizar en la base de datos
         if actualizar_postulante(self.postulante_id, postulante_data, self.user_data):
-            messagebox.showinfo("Éxito", "Postulante actualizado correctamente.")
+            # Mensaje informativo sobre las observaciones
+            if observaciones_actuales and nuevas_observaciones:
+                messagebox.showinfo("Éxito", 
+                    "Postulante actualizado correctamente.\n\n"
+                    "✅ Las nuevas observaciones se han agregado a las existentes.\n"
+                    "📝 Total de observaciones actualizadas.")
+            else:
+                messagebox.showinfo("Éxito", "Postulante actualizado correctamente.")
+            
+            # Llamar callback si existe, pasando los datos actualizados
+            if self.callback:
+                self.callback(postulante_data)
+            
             self.destroy()
         else:
             messagebox.showerror("Error", "No se pudo actualizar el postulante.")

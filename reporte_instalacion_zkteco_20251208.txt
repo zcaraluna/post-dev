@@ -1,0 +1,26 @@
+========================================
+   REPORTE DE INSTALACIÃ“N ZKTECO
+========================================
+Fecha: mar 12/08/2025 18:04:46.87
+
+CONTROLADORES INSTALADOS:
+
+SERVICIOS DE RED:
+
+REGLAS DE FIREWALL:
+
+Ninguna regla coincide con los criterios especificados.
+
+
+CONECTIVIDAD:
+
+Haciendo ping a 192.168.100.201 con 32 bytes de datos:
+Respuesta desde 192.168.100.201: bytes=32 tiempo=2ms TTL=64
+
+Estad¡sticas de ping para 192.168.100.201:
+    Paquetes: enviados = 1, recibidos = 1, perdidos = 0
+    (0% perdidos),
+Tiempos aproximados de ida y vuelta en milisegundos:
+    M¡nimo = 2ms, M ximo = 2ms, Media = 2ms
+
+========================================

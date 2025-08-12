@@ -598,28 +598,117 @@ class BuscarPostulantes(tk.Toplevel):
             ttk.Label(registro_content, text="Huella Dactilar:", style='Info.TLabel').grid(row=3, column=2, sticky='w', padx=(20, 10), pady=5)
             ttk.Label(registro_content, text="Registrada", style='Value.TLabel').grid(row=3, column=3, sticky='w', pady=5)
         
-        # SECCIÓN 3 - Información de Última Edición (solo si existe)
-        if postulante_completo[16] and postulante_completo[16].strip():
+        # SECCIÓN 3 - Historial de Ediciones
+        from database import obtener_historial_ediciones
+        historial_ediciones = obtener_historial_ediciones(postulante_id)
+        
+        if historial_ediciones or (postulante_completo[16] and postulante_completo[16].strip()):
             edicion_frame = ttk.Frame(scrollable_frame, style='Card.TFrame')
             edicion_frame.pack(fill='x', pady=(0, 15), padx=10)
             
             # Título de sección
-            ttk.Label(edicion_frame, text="INFORMACIÓN DE ÚLTIMA EDICIÓN", style='Section.TLabel').pack(anchor='w', padx=20, pady=(15, 10))
+            ttk.Label(edicion_frame, text="HISTORIAL DE EDICIONES", style='Section.TLabel').pack(anchor='w', padx=20, pady=(15, 10))
             
-            # Contenido de edición
+            # Contenido de edición con diseño mejorado
             edicion_content = ttk.Frame(edicion_frame, style='Card.TFrame')
             edicion_content.pack(fill='x', padx=25, pady=(0, 15))
             
-            edicion_content.columnconfigure(1, weight=1, minsize=200)
-            edicion_content.columnconfigure(3, weight=1, minsize=200)
+            # Frame para información destacada
+            info_destacada_frame = tk.Frame(edicion_content, bg='#f8f9fa', relief='solid', bd=1)
+            info_destacada_frame.pack(fill='x', padx=10, pady=10)
+            
+            # Información del último editor
+            ultimo_editor_frame = tk.Frame(info_destacada_frame, bg='#f8f9fa')
+            ultimo_editor_frame.pack(fill='x', padx=15, pady=10)
             
             # Usuario que editó
-            ttk.Label(edicion_content, text="Editado por:", style='Info.TLabel').grid(row=0, column=0, sticky='w', padx=(0, 10), pady=5)
-            ttk.Label(edicion_content, text=postulante_completo[16], style='Value.TLabel').grid(row=0, column=1, sticky='w', pady=5)
+            ttk.Label(ultimo_editor_frame, text="Último editor:", style='Info.TLabel').grid(row=0, column=0, sticky='w', padx=(0, 10), pady=5)
+            ttk.Label(ultimo_editor_frame, text=postulante_completo[16], style='Value.TLabel').grid(row=0, column=1, sticky='w', pady=5)
             
-            # Fecha de edición
-            ttk.Label(edicion_content, text="Fecha de Edición:", style='Info.TLabel').grid(row=0, column=2, sticky='w', padx=(20, 10), pady=5)
-            ttk.Label(edicion_content, text=fecha_ultima_edicion, style='Value.TLabel').grid(row=0, column=3, sticky='w', pady=5)
+            # Botón para ver historial completo (solo si hay historial)
+            if historial_ediciones:
+                
+                # Botón para ver historial completo
+                def mostrar_historial_completo():
+                    ventana_historial = tk.Toplevel(self)
+                    ventana_historial.title(f"Historial Completo de Ediciones - {postulante_completo[1]} {postulante_completo[2]}")
+                    ventana_historial.geometry('')
+                    ventana_historial.transient(self)
+                    ventana_historial.grab_set()
+                    ventana_historial.configure(bg='#f0f2f5')
+                    
+                    # Frame principal
+                    main_frame = tk.Frame(ventana_historial, bg='#f0f2f5', padx=20, pady=20)
+                    main_frame.pack(expand=True, fill='both')
+                    
+                    # Título
+                    titulo = tk.Label(main_frame, text="HISTORIAL COMPLETO DE EDICIONES", 
+                                      font=('Segoe UI', 16, 'bold'), 
+                                      fg='#2c3e50', bg='#f0f2f5')
+                    titulo.pack(pady=(0, 20))
+                    
+                    # Área de texto con scroll
+                    text_frame = tk.Frame(main_frame, bg='white', relief='solid', bd=1)
+                    text_frame.pack(expand=True, fill='both', pady=(0, 20))
+                    
+                    historial_text = tk.Text(text_frame, wrap='word', font=('Segoe UI', 10),
+                                           relief='flat', bg='white', fg='#2c3e50')
+                    historial_text.pack(side='left', fill='both', expand=True, padx=10, pady=10)
+                    
+                    # Scrollbar
+                    scrollbar = tk.Scrollbar(text_frame, orient='vertical', command=historial_text.yview)
+                    scrollbar.pack(side='right', fill='y')
+                    historial_text.configure(yscrollcommand=scrollbar.set)
+                    
+                    # Insertar historial (ordenado cronológicamente, más reciente primero)
+                    for i, (usuario, fecha, cambios) in enumerate(historial_ediciones, 1):
+                        # Formatear fecha correctamente (DD/MM/YYYY HH:MM)
+                        if hasattr(fecha, 'strftime'):
+                            fecha_formateada = fecha.strftime('%d/%m/%Y %H:%M')
+                        elif isinstance(fecha, str):
+                            try:
+                                from datetime import datetime
+                                fecha_obj = datetime.strptime(fecha, "%Y-%m-%d %H:%M:%S")
+                                fecha_formateada = fecha_obj.strftime('%d/%m/%Y %H:%M')
+                            except:
+                                fecha_formateada = fecha
+                        else:
+                            fecha_formateada = str(fecha)
+                        
+                        historial_text.insert('end', f"📝 EDICIÓN #{len(historial_ediciones) - i + 1}\n", 'titulo')
+                        historial_text.insert('end', f"👤 Usuario: {usuario}\n", 'usuario')
+                        historial_text.insert('end', f"🕒 Fecha: {fecha_formateada}\n", 'fecha')
+                        historial_text.insert('end', f"🔧 Cambios realizados:\n", 'subtitulo')
+                        
+                        # Mostrar cada cambio en una línea separada
+                        cambios_lista = cambios.split('; ')
+                        for cambio in cambios_lista:
+                            if cambio.strip():
+                                historial_text.insert('end', f"   • {cambio.strip()}\n", 'cambios')
+                        
+                        historial_text.insert('end', "\n", 'espacio')
+                    
+                    # Configurar tags para colores
+                    historial_text.tag_configure('titulo', font=('Segoe UI', 12, 'bold'), foreground='#2E5090')
+                    historial_text.tag_configure('usuario', font=('Segoe UI', 10, 'bold'), foreground='#27ae60')
+                    historial_text.tag_configure('fecha', font=('Segoe UI', 10), foreground='#7f8c8d')
+                    historial_text.tag_configure('subtitulo', font=('Segoe UI', 10, 'bold'), foreground='#e67e22')
+                    historial_text.tag_configure('cambios', font=('Segoe UI', 10), foreground='#2c3e50')
+                    historial_text.tag_configure('espacio', font=('Segoe UI', 10), foreground='#f0f2f5')
+                    
+                    historial_text.config(state='disabled')
+                    
+                    # Botón cerrar
+                    tk.Button(main_frame, text="Cerrar", command=ventana_historial.destroy,
+                              font=('Segoe UI', 10, 'bold'), fg='white', bg='#3498db',
+                              relief='flat', padx=20, pady=5).pack()
+                
+                # Botón para ver historial completo
+                btn_historial = tk.Button(ultimo_editor_frame, text="Ver historial completo", 
+                                        command=mostrar_historial_completo,
+                                        font=('Segoe UI', 9), fg='white', bg='#2E5090',
+                                        relief='flat', padx=15, pady=3, cursor='hand2')
+                btn_historial.grid(row=1, column=0, columnspan=2, sticky='w', pady=(10, 0))
         
         # SECCIÓN 4 - Información Adicional
         adicional_frame = ttk.Frame(scrollable_frame, style='Card.TFrame')
@@ -635,12 +724,33 @@ class BuscarPostulantes(tk.Toplevel):
         # Observaciones (puede ser largo, usar frame separado)
         ttk.Label(adicional_content, text="Observaciones:", style='Info.TLabel').pack(anchor='w', pady=(0, 5))
         
-        observaciones_text = tk.Text(adicional_content, height=4, wrap='word', 
-                                   font=('Segoe UI', 10), relief='flat', 
-                                   bg='#f8f9fa', fg='#2c3e50', padx=10, pady=10)
-        observaciones_text.pack(fill='x', pady=(0, 10))
+        # Frame para el área de observaciones con scrollbar visible
+        observaciones_frame = tk.Frame(adicional_content, bg='white')
+        observaciones_frame.pack(fill='x', pady=(0, 10))
+        
+        # Área de texto con altura optimizada para mostrar más contenido
+        observaciones_text = tk.Text(observaciones_frame, height=10, wrap='word', 
+                                   font=('Segoe UI', 10), relief='solid', bd=2,
+                                   bg='#f8f9fa', fg='#2c3e50', padx=15, pady=15)
+        observaciones_text.pack(side='left', fill='both', expand=True)
+        
+        # Scrollbar siempre visible y prominente
+        observaciones_scrollbar = tk.Scrollbar(observaciones_frame, orient='vertical', 
+                                             command=observaciones_text.yview,
+                                             width=20, bg='#2E5090', troughcolor='#e8e8e8',
+                                             activebackground='#1a3a6b', relief='raised', bd=2)
+        observaciones_scrollbar.pack(side='right', fill='y', padx=(8, 0))
+        
+        # Configurar el scroll
+        observaciones_text.configure(yscrollcommand=observaciones_scrollbar.set)
+        
+        # Insertar contenido
         observaciones_text.insert('1.0', str(postulante_completo[15] or 'Sin observaciones'))
         observaciones_text.config(state='disabled')
+        
+        # Forzar actualización del scroll después de insertar contenido
+        observaciones_text.update_idletasks()
+        observaciones_text.see('1.0')  # Ir al inicio
         
         # Botón de cerrar
         button_frame = ttk.Frame(scrollable_frame, style='Details.TFrame')
@@ -653,13 +763,21 @@ class BuscarPostulantes(tk.Toplevel):
         
         # Configurar scroll con mouse
         def _on_mousewheel(event):
-            main_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            try:
+                main_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            except tk.TclError:
+                # Si el canvas ya no existe, limpiar el binding
+                details_window.unbind_all("<MouseWheel>")
         
-        main_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        details_window.bind_all("<MouseWheel>", _on_mousewheel)
         
         # Limpiar binding cuando se cierre la ventana
         def on_closing():
-            main_canvas.unbind_all("<MouseWheel>")
+            try:
+                details_window.unbind_all("<MouseWheel>")
+                details_window.unbind_all("<Key>")
+            except:
+                pass
             details_window.destroy()
         
         details_window.protocol("WM_DELETE_WINDOW", on_closing)
@@ -693,25 +811,22 @@ class BuscarPostulantes(tk.Toplevel):
         # Configurar el canvas para que se expanda correctamente
         main_canvas.configure(scrollregion=main_canvas.bbox("all"))
         
-        # Asegurar que el scroll funcione con el mouse
-        def _on_mousewheel(event):
-            main_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        
-        # Vincular el scroll del mouse al canvas
-        main_canvas.bind_all("<MouseWheel>", _on_mousewheel)
-        
         # Configurar el scroll para que funcione con las teclas
         def _on_key_press(event):
-            if event.keysym == "Up":
-                main_canvas.yview_scroll(-1, "units")
-            elif event.keysym == "Down":
-                main_canvas.yview_scroll(1, "units")
-            elif event.keysym == "Page_Up":
-                main_canvas.yview_scroll(-1, "pages")
-            elif event.keysym == "Page_Down":
-                main_canvas.yview_scroll(1, "pages")
+            try:
+                if event.keysym == "Up":
+                    main_canvas.yview_scroll(-1, "units")
+                elif event.keysym == "Down":
+                    main_canvas.yview_scroll(1, "units")
+                elif event.keysym == "Page_Up":
+                    main_canvas.yview_scroll(-1, "pages")
+                elif event.keysym == "Page_Down":
+                    main_canvas.yview_scroll(1, "pages")
+            except tk.TclError:
+                # Si el canvas ya no existe, limpiar el binding
+                details_window.unbind_all("<Key>")
         
-        main_canvas.bind_all("<Key>", _on_key_press)
+        details_window.bind_all("<Key>", _on_key_press)
         
     def edit_postulante(self, values):
         """Editar postulante"""
@@ -758,27 +873,6 @@ class BuscarPostulantes(tk.Toplevel):
         # Verificar si puede editar este postulante
         if not puede_editar_postulante(self.user_data, postulante_dict):
             return
-            
-        # Encontrar el ID del postulante
-        postulante_id = None
-        for postulante in self.all_postulantes:
-            if (postulante[1] == values[1] and  # nombre
-                postulante[2] == values[2] and  # apellido
-                postulante[3] == values[3]):    # cédula
-                postulante_id = postulante[0]
-                break
-        
-        if not postulante_id:
-            # Intentar buscar por cédula directamente en la base de datos
-            from database import buscar_postulante
-            # Convertir cédula a string para evitar errores de tipo
-            cedula_str = str(values[3]) if values[3] is not None else ""
-            resultados = buscar_postulante(cedula=cedula_str)
-            if resultados:
-                postulante_id = resultados[0][0]  # Tomar el primer resultado
-            else:
-                messagebox.showerror("Error", "No se pudo identificar el postulante")
-                return
         
         # Abrir ventana de edición
         edit_window = EditarPostulante(self, self.user_data, postulante_id)

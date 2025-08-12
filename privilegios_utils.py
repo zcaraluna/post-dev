@@ -68,6 +68,7 @@ def puede_editar_postulante(user_data, postulante_data):
         bool: True si puede editar, False en caso contrario
     """
     if not user_data or not postulante_data:
+        messagebox.showerror("Error", "No se pudo verificar los permisos del usuario")
         return False
     
     rol = user_data.get('rol', 'USUARIO')
@@ -87,6 +88,16 @@ def puede_editar_postulante(user_data, postulante_data):
         if usuario_registrador == user_data.get('id'):
             return True
     
+    # Si llega aquí, no tiene permisos para editar este postulante
+    messagebox.showerror(
+        "Acceso Denegado", 
+        f"No puede editar este postulante.\n\n"
+        f"Su rol: {rol}\n"
+        f"Permisos disponibles:\n"
+        f"• editar_postulantes_propios: {'✅' if verificar_privilegio(rol, 'editar_postulantes_propios') else '❌'}\n"
+        f"• editar_postulantes_otros: {'✅' if verificar_privilegio(rol, 'editar_postulantes_otros') else '❌'}\n\n"
+        "Solo puede editar sus propios postulantes o contacte al administrador."
+    )
     return False
 
 def puede_eliminar_postulante(user_data, postulante_data):
@@ -101,6 +112,7 @@ def puede_eliminar_postulante(user_data, postulante_data):
         bool: True si puede eliminar, False en caso contrario
     """
     if not user_data or not postulante_data:
+        messagebox.showerror("Error", "No se pudo verificar los permisos del usuario")
         return False
     
     rol = user_data.get('rol', 'USUARIO')
@@ -108,6 +120,17 @@ def puede_eliminar_postulante(user_data, postulante_data):
     # SUPERADMIN puede eliminar cualquier postulante
     if rol == 'SUPERADMIN':
         return True
+    
+    # Verificar el permiso general de eliminar postulantes
+    if not verificar_privilegio(rol, 'eliminar_postulantes'):
+        messagebox.showerror(
+            "Acceso Denegado", 
+            f"No tiene permisos para eliminar postulantes.\n\n"
+            f"Permiso requerido: eliminar_postulantes\n"
+            f"Su rol: {rol}\n\n"
+            "Contacte al administrador del sistema."
+        )
+        return False
     
     # Verificar si puede eliminar postulantes de otros usuarios
     if verificar_privilegio(rol, 'eliminar_postulantes_otros'):
@@ -120,6 +143,17 @@ def puede_eliminar_postulante(user_data, postulante_data):
         if usuario_registrador == user_data.get('id'):
             return True
     
+    # Si llega aquí, no tiene permisos específicos para eliminar este postulante
+    messagebox.showerror(
+        "Acceso Denegado", 
+        f"No puede eliminar este postulante específico.\n\n"
+        f"Su rol: {rol}\n"
+        f"Permisos disponibles:\n"
+        f"• eliminar_postulantes: {'✅' if verificar_privilegio(rol, 'eliminar_postulantes') else '❌'}\n"
+        f"• eliminar_postulantes_propios: {'✅' if verificar_privilegio(rol, 'eliminar_postulantes_propios') else '❌'}\n"
+        f"• eliminar_postulantes_otros: {'✅' if verificar_privilegio(rol, 'eliminar_postulantes_otros') else '❌'}\n\n"
+        "Solo puede eliminar sus propios postulantes o contacte al administrador."
+    )
     return False
 
 def puede_ver_estadisticas_completas(user_data):
@@ -187,6 +221,27 @@ def puede_usar_zkteco_basico(user_data):
     return (verificar_privilegio(rol, 'gestion_zkteco_basica') or 
             verificar_privilegio(rol, 'gestion_zkteco_completa'))
 
+def puede_eliminar_postulantes_general(user_data):
+    """
+    Verificar si un usuario tiene el permiso general para eliminar postulantes
+    
+    Args:
+        user_data (dict): Datos del usuario
+        
+    Returns:
+        bool: True si tiene el permiso general, False en caso contrario
+    """
+    if not user_data:
+        return False
+    
+    rol = user_data.get('rol', 'USUARIO')
+    
+    # SUPERADMIN siempre puede eliminar postulantes
+    if rol == 'SUPERADMIN':
+        return True
+    
+    return verificar_privilegio(rol, 'eliminar_postulantes')
+
 def obtener_privilegios_usuario(user_data):
     """
     Obtener lista de privilegios activos de un usuario
@@ -214,6 +269,7 @@ def obtener_privilegios_usuario(user_data):
             'editar_postulantes_otros',
             'eliminar_postulantes_propios',
             'eliminar_postulantes_otros',
+            'eliminar_postulantes',
             'gestion_usuarios',
             'gestion_privilegios'
         ]
@@ -232,6 +288,7 @@ def obtener_privilegios_usuario(user_data):
         'editar_postulantes_otros',
         'eliminar_postulantes_propios',
         'eliminar_postulantes_otros',
+        'eliminar_postulantes',
         'gestion_usuarios',
         'gestion_privilegios'
     ]

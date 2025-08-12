@@ -1025,6 +1025,31 @@ class AgregarPostulante(tk.Toplevel):
             messagebox.showerror("Error", "No se pudo actualizar el K40. No se guardará en la base de datos.")
             return
 
+        # VERIFICAR PROBLEMAS JUDICIALES ANTES DE GUARDAR
+        from database import verificar_cedula_problema_judicial
+        
+        # Verificar si hay problemas judiciales
+        problema_judicial = verificar_cedula_problema_judicial(cedula)
+        
+        if problema_judicial:
+            # Mostrar diálogo de confirmación para problemas judiciales
+            respuesta = messagebox.askyesno(
+                "⚠️ ADVERTENCIA - Problema Judicial",
+                f"ADVERTENCIA: Este postulante con CI {cedula} podría tener problemas judiciales.\n\n"
+                f"Es recomendable verificar la situación real del mismo antes de continuar.\n\n"
+                f"¿Quiere proceder con el registro de todos modos?",
+                icon='warning'
+            )
+            
+            if not respuesta:
+                # Usuario canceló el registro
+                self.ocultar_estado()
+                messagebox.showinfo(
+                    "Registro Cancelado",
+                    "El registro del postulante ha sido cancelado debido al problema judicial detectado."
+                )
+                return
+        
         self.mostrar_estado("Guardando datos en base de datos...")
         
         # Usar la función de database.py que copia automáticamente el nombre del registrador
@@ -1048,7 +1073,9 @@ class AgregarPostulante(tk.Toplevel):
         }
         
         try:
-            if agregar_postulante(postulante_data):
+            resultado = agregar_postulante(postulante_data)
+            
+            if resultado['success']:
                 # Obtener el nombre del aparato biométrico
                 conn = connect_db()
                 cursor = conn.cursor()
@@ -1057,23 +1084,32 @@ class AgregarPostulante(tk.Toplevel):
                 aparato_nombre = aparato_nombre[0] if aparato_nombre else "Aparato Desconocido"
                 cursor.close()
                 conn.close()
+                
+                # MENSAJE DE ÉXITO Y CERRAR VENTANA
+                self.ocultar_estado()
+                
+                # Mostrar mensaje de éxito
+                if problema_judicial:
+                    messagebox.showinfo(
+                        "Registro Confirmado",
+                        f"Postulante registrado correctamente en el aparato {aparato_nombre}, con UID {usuario_uid}.\n\n"
+                        "⚠️ Nota: Se registró a pesar del problema judicial detectado."
+                    )
+                else:
+                    messagebox.showinfo(
+                        "Éxito",
+                        f"Postulante registrado correctamente en el aparato {aparato_nombre}, con UID {usuario_uid}."
+                    )
+                self.on_closing()
             else:
                 self.ocultar_estado()
-                messagebox.showerror("Error", "No se pudo guardar en la base de datos")
+                messagebox.showerror("Error", resultado['message'])
                 return
 
         except Exception as e:
             self.ocultar_estado()
             messagebox.showerror("Error", f"No se pudo guardar en la base de datos: {e}")
             return
-
-        # MENSAJE DE ÉXITO Y CERRAR VENTANA
-        self.ocultar_estado()
-        messagebox.showinfo(
-            "Éxito",
-            f"Postulante registrado correctamente en el aparato {aparato_nombre}, con UID {usuario_uid}."
-        )
-        self.on_closing()
 
 def main():
     """Función de prueba"""

@@ -189,10 +189,14 @@ def create_default_admin():
         if conn:
             conn.close()
 
-def get_postulantes():
+def get_postulantes(limit=None, offset=None):
     """
-    Obtener lista de postulantes
+    Obtener lista de postulantes con soporte para paginación
     
+    Args:
+        limit (int, optional): Número máximo de registros a retornar
+        offset (int, optional): Número de registros a saltar
+        
     Returns:
         list: Lista de postulantes
     """
@@ -203,7 +207,8 @@ def get_postulantes():
             
         cursor = conn.cursor()
         
-        query = sql.SQL("""
+        # Construir query base
+        query = """
             SELECT id, nombre, apellido, cedula, fecha_nacimiento, 
                    telefono, fecha_registro, usuario_registrador, id_k40, 
                    huella_dactilar, observaciones, edad, unidad, dedo_registrado, 
@@ -211,7 +216,13 @@ def get_postulantes():
                    fecha_ultima_edicion
             FROM postulantes 
             ORDER BY fecha_registro DESC
-        """)
+        """
+        
+        # Agregar paginación si se especifica
+        if limit is not None:
+            query += f" LIMIT {limit}"
+            if offset is not None:
+                query += f" OFFSET {offset}"
         
         cursor.execute(query)
         postulantes = cursor.fetchall()
@@ -225,6 +236,79 @@ def get_postulantes():
         if conn:
             conn.close()
 
+def get_total_postulantes():
+    """
+    Obtener el total de postulantes sin cargar todos los datos
+    
+    Returns:
+        int: Total de postulantes
+    """
+    try:
+        conn = connect_db()
+        if not conn:
+            return 0
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT COUNT(*) FROM postulantes")
+        total = cursor.fetchone()[0]
+        
+        return total
+        
+    except Exception as e:
+        logger.error(f"Error al obtener total de postulantes: {e}")
+        return 0
+    finally:
+        if conn:
+            conn.close()
+
+def verificar_cedula_problema_judicial(cedula, cursor=None):
+    """
+    Verificar si una cédula tiene problemas judiciales
+    
+    Args:
+        cedula (str): Número de cédula a verificar
+        cursor: Cursor de base de datos opcional (para usar conexión existente)
+        
+    Returns:
+        bool: True si la cédula tiene problemas judiciales, False en caso contrario
+    """
+    try:
+        # Si se proporciona un cursor, usarlo (para conexión existente)
+        if cursor:
+            cursor.execute("""
+                SELECT id FROM cedulas_problema_judicial 
+                WHERE cedula = %s
+            """, (cedula,))
+            
+            resultado = cursor.fetchone()
+            return resultado is not None
+        
+        # Si no se proporciona cursor, crear nueva conexión
+        else:
+            conn = connect_db()
+            if not conn:
+                return False
+                
+            cursor = conn.cursor()
+            
+            # Verificar si la cédula existe en la tabla de problemas judiciales
+            cursor.execute("""
+                SELECT id FROM cedulas_problema_judicial 
+                WHERE cedula = %s
+            """, (cedula,))
+            
+            resultado = cursor.fetchone()
+            
+            return resultado is not None
+            
+    except Exception as e:
+        logger.error(f"Error al verificar cédula problema judicial: {e}")
+        return False
+    finally:
+        if not cursor and 'conn' in locals():
+            conn.close()
+
 def agregar_postulante(postulante_data):
     """
     Agregar nuevo postulante
@@ -233,12 +317,12 @@ def agregar_postulante(postulante_data):
         postulante_data (dict): Datos del postulante
         
     Returns:
-        bool: True si se agregó correctamente
+        dict: {'success': bool, 'message': str}
     """
     try:
         conn = connect_db()
         if not conn:
-            return False
+            return {'success': False, 'message': 'Error de conexión a la base de datos'}
             
         cursor = conn.cursor()
         
@@ -297,11 +381,15 @@ def agregar_postulante(postulante_data):
         
         conn.commit()
         logger.info(f"Postulante agregado: {postulante_data['nombre']} {postulante_data['apellido']} por {nombre_registrador}")
-        return True
+        
+        return {
+            'success': True, 
+            'message': "Postulante agregado correctamente"
+        }
         
     except Exception as e:
         logger.error(f"Error al agregar postulante: {e}")
-        return False
+        return {'success': False, 'message': f'Error al agregar postulante: {e}'}
     finally:
         if conn:
             conn.close()
@@ -516,11 +604,80 @@ def actualizar_postulante(postulante_id, postulante_data, user_data=None):
             
         cursor = conn.cursor()
         
+        # Obtener datos actuales del postulante para comparar cambios
+        cursor.execute("""
+            SELECT nombre, apellido, cedula, fecha_nacimiento, telefono, 
+                   edad, unidad, dedo_registrado, observaciones
+            FROM postulantes WHERE id = %s
+        """, (postulante_id,))
+        
+        datos_actuales = cursor.fetchone()
+        if not datos_actuales:
+            logger.error(f"Postulante con ID {postulante_id} no encontrado")
+            return False
+        
         # Preparar información del usuario que edita
         usuario_editor = "Desconocido"
         if user_data and 'nombre' in user_data and 'apellido' in user_data:
             usuario_editor = f"{user_data['nombre']} {user_data['apellido']}"
         
+        # Detectar cambios en cada campo
+        cambios = []
+        campos_actuales = {
+            'nombre': datos_actuales[0],
+            'apellido': datos_actuales[1],
+            'cedula': datos_actuales[2],
+            'fecha_nacimiento': datos_actuales[3],
+            'telefono': datos_actuales[4],
+            'edad': datos_actuales[5],
+            'unidad': datos_actuales[6],
+            'dedo_registrado': datos_actuales[7],
+            'observaciones': datos_actuales[8]
+        }
+        
+        campos_nuevos = {
+            'nombre': postulante_data['nombre'],
+            'apellido': postulante_data['apellido'],
+            'cedula': postulante_data['cedula'],
+            'fecha_nacimiento': postulante_data['fecha_nacimiento'],
+            'telefono': postulante_data['telefono'],
+            'edad': postulante_data.get('edad'),
+            'unidad': postulante_data.get('unidad'),
+            'dedo_registrado': postulante_data.get('dedo_registrado'),
+            'observaciones': postulante_data.get('observaciones', '')
+        }
+        
+        # Mapeo de nombres de campos para mostrar
+        nombres_campos = {
+            'nombre': 'Nombre',
+            'apellido': 'Apellido',
+            'cedula': 'Cédula',
+            'fecha_nacimiento': 'Fecha de Nacimiento',
+            'telefono': 'Teléfono',
+            'edad': 'Edad',
+            'unidad': 'Unidad',
+            'dedo_registrado': 'Dedo Registrado',
+            'observaciones': 'Observaciones'
+        }
+        
+        # Comparar campos y registrar cambios (excluyendo observaciones)
+        for campo, valor_actual in campos_actuales.items():
+            # Excluir observaciones del historial de ediciones
+            if campo == 'observaciones':
+                continue
+                
+            valor_nuevo = campos_nuevos[campo]
+            # Convertir a string para comparación consistente
+            valor_actual_str = str(valor_actual) if valor_actual is not None else ''
+            valor_nuevo_str = str(valor_nuevo) if valor_nuevo is not None else ''
+            
+            if valor_actual_str != valor_nuevo_str:
+                # Solo registrar si realmente hay un cambio
+                if valor_actual_str.strip() != valor_nuevo_str.strip():
+                    nombre_campo = nombres_campos.get(campo, campo.title())
+                    cambios.append(f"{nombre_campo}: '{valor_actual_str}' → '{valor_nuevo_str}'")
+        
+        # Actualizar postulante
         query = sql.SQL("""
             UPDATE postulantes SET
                 nombre = %s,
@@ -550,6 +707,30 @@ def actualizar_postulante(postulante_id, postulante_data, user_data=None):
             usuario_editor,
             postulante_id
         ))
+        
+        # Registrar en historial de ediciones si hay cambios
+        if cambios:
+            # Crear tabla de historial si no existe
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS historial_ediciones_postulantes (
+                    id SERIAL PRIMARY KEY,
+                    postulante_id INTEGER NOT NULL,
+                    usuario_editor VARCHAR(100) NOT NULL,
+                    fecha_edicion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    cambios TEXT NOT NULL,
+                    FOREIGN KEY (postulante_id) REFERENCES postulantes(id) ON DELETE CASCADE
+                )
+            """)
+            
+            # Insertar registro en historial con hora local
+            cambios_texto = "; ".join(cambios)
+            from datetime import datetime
+            hora_local = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            cursor.execute("""
+                INSERT INTO historial_ediciones_postulantes 
+                (postulante_id, usuario_editor, fecha_edicion, cambios) 
+                VALUES (%s, %s, %s, %s)
+            """, (postulante_id, usuario_editor, hora_local, cambios_texto))
         
         conn.commit()
         logger.info(f"Postulante actualizado: {postulante_data['nombre']} {postulante_data['apellido']} por {usuario_editor}")
@@ -636,6 +817,53 @@ def obtener_postulante_por_id(postulante_id):
     except Exception as e:
         logger.error(f"Error al obtener postulante: {e}")
         return None
+    finally:
+        if conn:
+            conn.close()
+
+def obtener_historial_ediciones(postulante_id):
+    """
+    Obtener historial completo de ediciones de un postulante
+    
+    Args:
+        postulante_id (int): ID del postulante
+        
+    Returns:
+        list: Lista de ediciones ordenadas por fecha (más reciente primero)
+    """
+    try:
+        conn = connect_db()
+        if not conn:
+            return []
+            
+        cursor = conn.cursor()
+        
+        # Verificar si la tabla existe
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'historial_ediciones_postulantes'
+            )
+        """)
+        
+        if not cursor.fetchone()[0]:
+            return []  # Tabla no existe, no hay historial
+        
+        query = sql.SQL("""
+            SELECT usuario_editor, fecha_edicion, cambios
+            FROM historial_ediciones_postulantes 
+            WHERE postulante_id = %s
+            ORDER BY fecha_edicion DESC
+        """)
+        
+        cursor.execute(query, (postulante_id,))
+        historial = cursor.fetchall()
+        
+        return historial
+        
+    except Exception as e:
+        logger.error(f"Error al obtener historial de ediciones: {e}")
+        return []
     finally:
         if conn:
             conn.close()
@@ -992,6 +1220,13 @@ def init_database():
             )
         """)
         
+        # Crear tabla de problemas judiciales si no existe
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS cedulas_problema_judicial (
+                id SERIAL PRIMARY KEY,
+                cedula VARCHAR(20) UNIQUE NOT NULL
+            )
+        """)
 
         
         conn.commit()
@@ -1024,38 +1259,31 @@ def init_default_privileges(cursor, conn):
     Inicializar privilegios por defecto para cada rol
     """
     try:
-        # Definir privilegios por defecto
-        default_privileges = [
-            # USUARIO - Privilegios básicos
-            ('USUARIO', 'buscar_postulantes', 'Puede buscar y ver postulantes'),
-            ('USUARIO', 'agregar_postulante', 'Puede agregar nuevos postulantes'),
-            ('USUARIO', 'lista_postulantes', 'Puede ver la lista de postulantes'),
-            ('USUARIO', 'estadisticas_basicas', 'Puede ver estadísticas básicas'),
-            ('USUARIO', 'gestion_zkteco_basica', 'Puede usar dispositivos ZKTeco'),
-            
-            # ADMIN - Privilegios intermedios
-            ('ADMIN', 'buscar_postulantes', 'Puede buscar y ver postulantes'),
-            ('ADMIN', 'agregar_postulante', 'Puede agregar nuevos postulantes'),
-            ('ADMIN', 'lista_postulantes', 'Puede ver la lista de postulantes'),
-            ('ADMIN', 'estadisticas_completas', 'Puede ver todas las estadísticas'),
-            ('ADMIN', 'gestion_zkteco_completa', 'Puede gestionar dispositivos ZKTeco'),
-            ('ADMIN', 'editar_postulantes_propios', 'Puede editar sus propios postulantes'),
-            ('ADMIN', 'editar_postulantes_otros', 'Puede editar postulantes de otros usuarios'),
-            ('ADMIN', 'eliminar_postulantes_propios', 'Puede eliminar sus propios postulantes'),
-            
-            # SUPERADMIN - Privilegios totales
-            ('SUPERADMIN', 'buscar_postulantes', 'Puede buscar y ver postulantes'),
-            ('SUPERADMIN', 'agregar_postulante', 'Puede agregar nuevos postulantes'),
-            ('SUPERADMIN', 'lista_postulantes', 'Puede ver la lista de postulantes'),
-            ('SUPERADMIN', 'estadisticas_completas', 'Puede ver todas las estadísticas'),
-            ('SUPERADMIN', 'gestion_zkteco_completa', 'Puede gestionar dispositivos ZKTeco'),
-            ('SUPERADMIN', 'editar_postulantes_propios', 'Puede editar sus propios postulantes'),
-            ('SUPERADMIN', 'editar_postulantes_otros', 'Puede editar postulantes de otros usuarios'),
-            ('SUPERADMIN', 'eliminar_postulantes_propios', 'Puede eliminar sus propios postulantes'),
-            ('SUPERADMIN', 'eliminar_postulantes_otros', 'Puede eliminar postulantes de otros usuarios'),
-            ('SUPERADMIN', 'gestion_usuarios', 'Puede gestionar usuarios del sistema'),
-            ('SUPERADMIN', 'gestion_privilegios', 'Puede gestionar privilegios del sistema'),
+        # Definir TODOS los privilegios disponibles para TODOS los roles
+        todos_los_privilegios = [
+            ('buscar_postulantes', 'Puede buscar y ver postulantes'),
+            ('agregar_postulante', 'Puede agregar nuevos postulantes'),
+            ('lista_postulantes', 'Puede ver la lista de postulantes'),
+            ('estadisticas_basicas', 'Puede ver estadísticas básicas'),
+            ('estadisticas_completas', 'Puede ver todas las estadísticas'),
+            ('gestion_zkteco_basica', 'Puede usar dispositivos ZKTeco'),
+            ('gestion_zkteco_completa', 'Puede gestionar dispositivos ZKTeco'),
+            ('editar_postulantes_propios', 'Puede editar sus propios postulantes'),
+            ('editar_postulantes_otros', 'Puede editar postulantes de otros usuarios'),
+            ('eliminar_postulantes_propios', 'Puede eliminar sus propios postulantes'),
+            ('eliminar_postulantes_otros', 'Puede eliminar postulantes de otros usuarios'),
+            ('eliminar_postulantes', 'Puede eliminar postulantes (permiso general)'),
+            ('gestion_usuarios', 'Puede gestionar usuarios del sistema'),
+            ('gestion_privilegios', 'Puede gestionar privilegios del sistema'),
         ]
+        
+        # Crear privilegios para todos los roles con la misma lista completa
+        default_privileges = []
+        roles = ['USUARIO', 'ADMIN', 'SUPERADMIN']
+        
+        for rol in roles:
+            for permiso, descripcion in todos_los_privilegios:
+                default_privileges.append((rol, permiso, descripcion))
         
         # Insertar privilegios por defecto
         for rol, permiso, descripcion in default_privileges:

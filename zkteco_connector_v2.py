@@ -7,10 +7,96 @@ import logging
 from zk import ZK
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+import subprocess
+import platform
+import os
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+def silent_ping(host: str, timeout: int = 3) -> bool:
+    """
+    Realizar ping silencioso sin mostrar ventanas de CMD
+    
+    Args:
+        host: Dirección IP o hostname a hacer ping
+        timeout: Timeout en segundos
+        
+    Returns:
+        True si el host responde, False en caso contrario
+    """
+    try:
+        # Detectar el sistema operativo
+        system = platform.system().lower()
+        
+        if system == "windows":
+            # En Windows, usar subprocess con CREATE_NO_WINDOW para ocultar la ventana
+            if hasattr(subprocess, 'CREATE_NO_WINDOW'):
+                # Windows 10/11
+                result = subprocess.run(
+                    ['ping', '-n', '1', '-w', str(timeout * 1000), host],
+                    capture_output=True,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+            else:
+                # Windows anterior
+                result = subprocess.run(
+                    ['ping', '-n', '1', '-w', str(timeout * 1000), host],
+                    capture_output=True,
+                    text=True,
+                    startupinfo=subprocess.STARTUPINFO()
+                )
+        else:
+            # En Linux/Mac
+            result = subprocess.run(
+                ['ping', '-c', '1', '-W', str(timeout), host],
+                capture_output=True,
+                text=True
+            )
+        
+        # Verificar si el ping fue exitoso
+        return result.returncode == 0
+        
+    except Exception as e:
+        logger.warning(f"Error en ping silencioso a {host}: {e}")
+        return False
+
+def test_network_connectivity(ip_address: str, port: int = 4370) -> bool:
+    """
+    Probar conectividad de red de forma silenciosa
+    
+    Args:
+        ip_address: Dirección IP del dispositivo
+        port: Puerto del dispositivo
+        
+    Returns:
+        True si hay conectividad, False en caso contrario
+    """
+    try:
+        # Primero hacer ping silencioso
+        if not silent_ping(ip_address):
+            logger.warning(f"No hay conectividad de red con {ip_address}")
+            return False
+        
+        # Si el ping es exitoso, intentar conectar al puerto
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(3)
+        result = sock.connect_ex((ip_address, port))
+        sock.close()
+        
+        if result == 0:
+            logger.info(f"Conectividad de red exitosa con {ip_address}:{port}")
+            return True
+        else:
+            logger.warning(f"Puerto {port} no está abierto en {ip_address}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error al probar conectividad de red: {e}")
+        return False
 
 class ZKTecoK40V2:
     """Clase para conectar con dispositivos ZKTeco K40 usando pyzk"""
@@ -32,12 +118,17 @@ class ZKTecoK40V2:
         
     def connect(self) -> bool:
         """
-        Conectar al dispositivo
+        Conectar al dispositivo con verificación silenciosa previa
         
         Returns:
             True si la conexión fue exitosa, False en caso contrario
         """
         try:
+            # Verificar conectividad de red de forma silenciosa antes de conectar
+            if not test_network_connectivity(self.ip_address, self.port):
+                logger.warning(f"No hay conectividad de red con {self.ip_address}:{self.port}")
+                return False
+            
             logger.info(f"Conectando a {self.ip_address}:{self.port}")
             self.conn = self.zk.connect()
             
@@ -504,7 +595,7 @@ class ZKTecoK40V2:
 
 def test_connection(ip_address: str, port: int = 4370) -> bool:
     """
-    Probar conexión básica con el dispositivo
+    Probar conexión básica con el dispositivo usando ping silencioso
     
     Args:
         ip_address: Dirección IP del dispositivo
@@ -514,13 +605,19 @@ def test_connection(ip_address: str, port: int = 4370) -> bool:
         True si la conexión fue exitosa, False en caso contrario
     """
     try:
+        # Primero verificar conectividad de red de forma silenciosa
+        if not test_network_connectivity(ip_address, port):
+            logger.warning(f"No hay conectividad de red con {ip_address}:{port}")
+            return False
+        
+        # Si hay conectividad de red, intentar conectar al dispositivo
         device = ZKTecoK40V2(ip_address, port)
         return device.connect()
     except Exception as e:
         logger.error(f"Error en prueba de conexión: {e}")
         return False
     finally:
-        if device.conn:
+        if 'device' in locals() and device.conn:
             device.disconnect()
 
 if __name__ == "__main__":
@@ -552,4 +649,18 @@ if __name__ == "__main__":
         finally:
             device.disconnect()
     else:
-        print("❌ No se pudo conectar") 
+        print("❌ No se pudo conectar")
+
+# Función de conveniencia para importar desde otros módulos
+def check_device_connectivity(ip_address: str = "192.168.100.201", port: int = 4370) -> bool:
+    """
+    Verificar conectividad con el dispositivo de forma completamente silenciosa
+    
+    Args:
+        ip_address: Dirección IP del dispositivo (por defecto 192.168.100.201)
+        port: Puerto del dispositivo (por defecto 4370)
+        
+    Returns:
+        True si hay conectividad, False en caso contrario
+    """
+    return test_network_connectivity(ip_address, port) 

@@ -1,0 +1,67 @@
+INFORMACIÓN DE INSTALACIÓN - QUIRA MÓVIL v1.0
+===============================================
+
+ARCHIVO: QUIRA_Movil_v1.0.apk
+TAMAÑO: ~23.2 MB
+VERSIÓN: 1.0.0
+FECHA: 8 de Noviembre, 2025
+
+INSTRUCCIONES DE INSTALACIÓN:
+=============================
+
+1. TRANSFERIR EL APK:
+   - Copie el archivo "QUIRA_Movil_v1.0.apk" a su dispositivo Android
+   - Puede usar USB, correo electrónico, Google Drive, o cualquier método de transferencia
+
+2. HABILITAR FUENTES DESCONOCIDAS:
+   - Vaya a Configuración > Seguridad
+   - Active "Fuentes desconocidas" o "Instalar apps desconocidas"
+   - En algunos dispositivos: Configuración > Aplicaciones > Acceso especial > Instalar apps desconocidas
+
+3. INSTALAR LA APLICACIÓN:
+   - Abra el archivo APK desde su gestor de archivos
+   - Toque "Instalar" cuando se le solicite
+   - Espere a que termine la instalación
+   - Toque "Abrir" para iniciar la aplicación
+
+4. PRIMER USO:
+   - La aplicación se conectará automáticamente a la base de datos QUIRA
+   - Ingrese sus credenciales del sistema QUIRA
+   - ¡Listo para usar!
+
+REQUISITOS DEL SISTEMA:
+=======================
+- Android 5.0 (API level 21) o superior
+- Conexión a internet
+- Credenciales válidas del sistema QUIRA
+
+CONFIGURACIÓN DE RED:
+=====================
+- La aplicación se conecta directamente a: decfespaxsilco.ddns.net:5432
+- No requiere VPN
+- Puerto: 5432 (PostgreSQL)
+
+CARACTERÍSTICAS PRINCIPALES:
+============================
+✓ Búsqueda unificada (cédula o nombre)
+✓ Búsquedas parciales
+✓ Información completa de postulantes
+✓ Interfaz moderna y responsiva
+✓ Conexión directa a base de datos
+✓ Autenticación segura
+
+SOPORTE:
+========
+Para soporte técnico, contactar al equipo de desarrollo de QUIRA.
+
+NOTAS IMPORTANTES:
+==================
+- La aplicación requiere permisos de internet para funcionar
+- Los datos se obtienen en tiempo real desde la base de datos
+- Se recomienda conexión WiFi estable para mejor rendimiento
+- La aplicación es compatible con la mayoría de dispositivos Android modernos
+
+---
+QUIRA Móvil v1.0 - Sistema de Búsqueda de Postulantes
+Desarrollado con Flutter
+

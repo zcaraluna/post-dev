@@ -148,6 +148,8 @@ class MenuPrincipal(tk.Frame):
             sistema_menu.add_separator()
             sistema_menu.add_command(label="Gestión de Usuarios", command=self.gestion_usuarios)
             sistema_menu.add_command(label="Gestión de Privilegios", command=self.gestion_privilegios)
+            sistema_menu.add_separator()
+            sistema_menu.add_command(label="Cargar Cédulas Problema Judicial", command=self.cargar_cedulas_problema_judicial)
         
         # Menú Ayuda
         ayuda_menu = tk.Menu(menubar, tearoff=0)
@@ -245,19 +247,37 @@ class MenuPrincipal(tk.Frame):
     
     def buscar_postulantes(self):
         """Abrir ventana de búsqueda de postulantes"""
-        from privilegios_utils import verificar_permiso
+        from privilegios_utils import verificar_permiso_silencioso
         
-        if verificar_permiso(self.user_data, 'buscar_postulantes'):
+        if verificar_permiso_silencioso(self.user_data, 'buscar_postulantes'):
             from buscar_postulantes import BuscarPostulantes
             BuscarPostulantes(self, self.user_data)
+        else:
+            # Mostrar aviso específico para buscar postulantes
+            from tkinter import messagebox
+            messagebox.showerror(
+                "Acceso Denegado", 
+                "No tiene permisos para buscar postulantes.\n\n"
+                "Permiso requerido: buscar_postulantes\n\n"
+                "Contacte al administrador del sistema."
+            )
     
     def agregar_postulante(self):
         """Abrir ventana de agregar postulante"""
-        from privilegios_utils import verificar_permiso
+        from privilegios_utils import verificar_permiso_silencioso
         
-        if verificar_permiso(self.user_data, 'agregar_postulante'):
+        if verificar_permiso_silencioso(self.user_data, 'agregar_postulante'):
             from agregar_postulante import AgregarPostulante
             AgregarPostulante(self, self.user_data)
+        else:
+            # Mostrar aviso específico para agregar postulante
+            from tkinter import messagebox
+            messagebox.showerror(
+                "Acceso Denegado", 
+                "No tiene permisos para agregar postulantes.\n\n"
+                "Permiso requerido: agregar_postulante\n\n"
+                "Contacte al administrador del sistema."
+            )
     
     def gestion_zkteco(self):
         """Abrir gestión del dispositivo ZKTeco"""
@@ -266,14 +286,32 @@ class MenuPrincipal(tk.Frame):
         if puede_gestionar_zkteco(self.user_data):
             from gestion_zkteco import GestionZKTeco
             GestionZKTeco(self, self.user_data)
+        else:
+            # Mostrar aviso específico para ZKTeco
+            from tkinter import messagebox
+            messagebox.showerror(
+                "Acceso Denegado", 
+                "No tiene permisos para gestionar dispositivos ZKTeco.\n\n"
+                "Permiso requerido: gestion_zkteco_completa\n\n"
+                "Contacte al administrador del sistema."
+            )
     
     def ver_lista_postulantes(self):
         """Abrir lista completa de postulantes"""
-        from privilegios_utils import verificar_permiso
+        from privilegios_utils import verificar_permiso_silencioso
         
-        if verificar_permiso(self.user_data, 'lista_postulantes'):
+        if verificar_permiso_silencioso(self.user_data, 'lista_postulantes'):
             from lista_postulantes import ListaPostulantes
             ListaPostulantes(self, self.user_data)
+        else:
+            # Mostrar aviso específico para lista de postulantes
+            from tkinter import messagebox
+            messagebox.showerror(
+                "Acceso Denegado", 
+                "No tiene permisos para ver la lista de postulantes.\n\n"
+                "Permiso requerido: lista_postulantes\n\n"
+                "Contacte al administrador del sistema."
+            )
     
     def ver_estadisticas(self):
         """Abrir estadísticas del sistema"""
@@ -283,22 +321,56 @@ class MenuPrincipal(tk.Frame):
         if puede_ver_estadisticas_completas(self.user_data) or verificar_permiso(self.user_data, 'estadisticas_basicas', mostrar_error=False):
             from estadisticas import Estadisticas
             Estadisticas(self, self.user_data)
+        else:
+            # Mostrar aviso específico para estadísticas
+            from tkinter import messagebox
+            messagebox.showerror(
+                "Acceso Denegado", 
+                "No tiene permisos para ver estadísticas.\n\n"
+                "Permisos requeridos:\n"
+                "• estadisticas_basicas\n"
+                "• estadisticas_completas\n\n"
+                "Contacte al administrador del sistema."
+            )
     
     def gestion_usuarios(self):
         """Abrir gestión de usuarios"""
-        from privilegios_utils import verificar_permiso
+        from privilegios_utils import verificar_permiso_silencioso
         
-        if verificar_permiso(self.user_data, 'gestion_usuarios'):
+        if verificar_permiso_silencioso(self.user_data, 'gestion_usuarios'):
             from gestion_usuarios import GestionUsuarios
             GestionUsuarios(self, self.user_data)
+        else:
+            # Mostrar aviso específico para gestión de usuarios
+            from tkinter import messagebox
+            messagebox.showerror(
+                "Acceso Denegado", 
+                "No tiene permisos para gestionar usuarios.\n\n"
+                "Permiso requerido: gestion_usuarios\n\n"
+                "Contacte al administrador del sistema."
+            )
     
     def gestion_privilegios(self):
         """Abrir gestión de privilegios"""
-        from privilegios_utils import verificar_permiso
+        from privilegios_utils import verificar_permiso_silencioso
         
-        if verificar_permiso(self.user_data, 'gestion_privilegios'):
+        if verificar_permiso_silencioso(self.user_data, 'gestion_privilegios'):
             from gestion_privilegios import GestionPrivilegios
             GestionPrivilegios(self, self.user_data)
+        else:
+            # Mostrar aviso específico para gestión de privilegios
+            from tkinter import messagebox
+            messagebox.showerror(
+                "Acceso Denegado", 
+                "No tiene permisos para gestionar privilegios.\n\n"
+                "Permiso requerido: gestion_privilegios\n\n"
+                "Contacte al administrador del sistema."
+            )
+    
+    def cargar_cedulas_problema_judicial(self):
+        """Abrir carga de cédulas con problemas judiciales"""
+        from cargar_cedulas_problema_judicial import CargarCedulasProblemaJudicial
+        CargarCedulasProblemaJudicial(self)
     
 
     def acerca_de(self):

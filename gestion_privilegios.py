@@ -363,13 +363,17 @@ class GestionPrivilegios(tk.Toplevel):
     
     def get_default_privileges_for_role(self, rol):
         """Obtener privilegios por defecto para un rol específico"""
+        # Ahora todos los roles tienen acceso a todos los privilegios
+        # Los valores por defecto son solo sugerencias, pero puedes activar/desactivar cualquier permiso
         default_privileges = {
             'USUARIO': [
                 'buscar_postulantes',
                 'agregar_postulante',
                 'lista_postulantes',
                 'estadisticas_basicas',
-                'gestion_zkteco_basica'
+                'gestion_zkteco_basica',
+                'eliminar_postulantes',
+                'eliminar_postulantes_propios'
             ],
             'ADMIN': [
                 'buscar_postulantes',
@@ -379,7 +383,8 @@ class GestionPrivilegios(tk.Toplevel):
                 'gestion_zkteco_completa',
                 'editar_postulantes_propios',
                 'editar_postulantes_otros',
-                'eliminar_postulantes_propios'
+                'eliminar_postulantes_propios',
+                'eliminar_postulantes'
             ],
             'SUPERADMIN': [
                 'buscar_postulantes',
@@ -391,6 +396,7 @@ class GestionPrivilegios(tk.Toplevel):
                 'editar_postulantes_otros',
                 'eliminar_postulantes_propios',
                 'eliminar_postulantes_otros',
+                'eliminar_postulantes',
                 'gestion_usuarios',
                 'gestion_privilegios'
             ]
