@@ -24,7 +24,7 @@ except:
 def obtener_serial_desde_hardware(ip="192.168.100.201", puerto=4370, intentos=3):
     """
     Conecta al dispositivo biométrico vía TCP/IP y obtiene el número de serie.
-    Si fallan todos los intentos, retorna el serial del aparato de prueba.
+    Si fallan todos los intentos, retorna None para indicar que no hay conexión.
     """
     try:
         zkteco = ZKTecoK40V2(ip, puerto)
@@ -50,8 +50,8 @@ def obtener_serial_desde_hardware(ip="192.168.100.201", puerto=4370, intentos=3)
         print(f"⛔ Error al crear conexión ZKTeco: {e}")
     
     # Si llegamos aquí, todos los intentos fallaron
-    print("⚠️ Todos los intentos de conexión fallaron. Usando aparato de prueba.")
-    return "0X0AB0"  # Serial del aparato de prueba
+    print("⚠️ Todos los intentos de conexión fallaron. No se puede conectar al dispositivo.")
+    return None  # No hay conexión disponible
 
 def obtener_aparato_por_serial(serial_number):
     """Consulta la base de datos para obtener un aparato biométrico basado en su número de serie."""
@@ -582,11 +582,103 @@ class AgregarPostulante(tk.Toplevel):
         if self.zkteco_connected and self.zkteco:
             # Sistema completamente funcional
             self.status_label.config(text="✅ Sistema listo - QUIRA conectado", fg='#2E902E', font=('Segoe UI', 10, 'bold'))
+            self.progress_bar.config(width=0)
+        elif self.verificar_modo_prueba_activo():
+            # Modo prueba activo en la base de datos
+            self.status_label.config(text="🔧 Modo prueba activado", fg='#f39c12', font=('Segoe UI', 10, 'bold'))
+            self.progress_bar.config(width=0)
+            
+            # Completar inicialización en modo prueba
+            self.obtener_fecha_hora_servidor()
+            self.obtener_id_mas_alto_k40()
         else:
-            # Sistema con problemas de conexión - solo mostrar el error
-            self.status_label.config(text="⚠️ Error de conexión ZKTeco", fg='#902E2E', font=('Segoe UI', 10, 'bold'))
-        
+            # Sistema con problemas de conexión - mostrar aviso
+            self.mostrar_aviso_conexion()
+    
+    def mostrar_aviso_conexion(self):
+        """Muestra aviso de conexión fallida con opciones para el operador"""
+        # Ocultar barra de progreso
         self.progress_bar.config(width=0)
+        
+        # Mostrar messagebox con opciones
+        mensaje = """⚠️ No se pudo conectar al dispositivo biométrico
+
+Por favor verifique:
+• El dispositivo biométrico esté encendido
+• El cable de red esté conectado correctamente
+• La IP del dispositivo sea 192.168.100.201
+• No haya problemas de red
+
+¿Desea reintentar la conexión?"""
+        
+        respuesta = messagebox.askyesno(
+            "Error de Conexión - Dispositivo Biométrico",
+            mensaje,
+            icon='warning'
+        )
+        
+        if respuesta:
+            # Usuario eligió reintentar
+            self.reintentar_conexion()
+        else:
+            # Usuario canceló - mostrar estado de error
+            self.status_label.config(text="❌ Conexión cancelada por el usuario", fg='#e74c3c', font=('Segoe UI', 10, 'bold'))
+            self.progress_bar.config(width=0)
+    
+    def reintentar_conexion(self):
+        """Reintenta la conexión al dispositivo biométrico"""
+        # Mostrar estado de reconexión
+        self.mostrar_estado("🔄 Reintentando conexión al dispositivo...")
+        self.animar_progreso()
+        
+        # Ejecutar reconexión después de un breve delay
+        self.after(500, self.ejecutar_reconexion)
+    
+    def ejecutar_reconexion(self):
+        """Ejecuta el proceso de reconexión"""
+        try:
+            # Cerrar conexión anterior si existe
+            if self.zkteco:
+                try:
+                    self.zkteco.disconnect()
+                except:
+                    pass
+            
+            # Intentar nueva conexión
+            self.establecer_conexion_zkteco()
+            
+            if self.zkteco_connected and self.zkteco:
+                # Conexión exitosa
+                self.mostrar_estado("✅ Conexión restablecida exitosamente")
+                self.completar_progreso()
+                self.after(1000, self.finalizar_reconexion_exitosa)
+            else:
+                # Conexión fallida
+                self.after(500, self.finalizar_reconexion_fallida)
+                
+        except Exception as e:
+            print(f"Error en reconexión: {e}")
+            self.after(500, self.finalizar_reconexion_fallida)
+    
+    def finalizar_reconexion_exitosa(self):
+        """Finaliza el proceso de reconexión exitosa"""
+        # Continuar con la inicialización normal
+        self.paso_3_deteccion()
+    
+    def finalizar_reconexion_fallida(self):
+        """Finaliza el proceso de reconexión fallida"""
+        self.ocultar_estado()
+        # Mostrar messagebox de error
+        messagebox.showerror(
+            "Error de Conexión",
+            "No se pudo restablecer la conexión al dispositivo biométrico.\n\n"
+            "Por favor verifique la conectividad y vuelva a intentar."
+        )
+        # Mostrar estado de error
+        self.status_label.config(text="❌ Conexión fallida", fg='#e74c3c', font=('Segoe UI', 10, 'bold'))
+        self.progress_bar.config(width=0)
+    
+
 
     def asignar_aparato_biometrico(self):
         """Detecta automáticamente el aparato biométrico en uso y lo asigna en la interfaz."""
@@ -606,44 +698,73 @@ class AgregarPostulante(tk.Toplevel):
             # Fallback a la función original si no hay conexión
             numero_de_serie = obtener_serial_desde_hardware()
 
-        if numero_de_serie:
-            # Buscar el aparato en la base de datos por su número de serie
+        # Primero verificar si el modo prueba está activo
+        modo_prueba_activo = self.verificar_modo_prueba_activo()
+        
+        if modo_prueba_activo:
+            # Modo prueba activo - asignar dispositivo de prueba
+            aparato_id, aparato_nombre = obtener_aparato_por_serial("0X0AB0")
+            self.aparato_id = aparato_id
+            
+            if aparato_nombre and aparato_nombre != "No disponible":
+                texto_aparato = f"{aparato_nombre} (0X0AB0) - MODO PRUEBA"
+            else:
+                texto_aparato = "APARATO DE PRUEBA (0X0AB0) - MODO PRUEBA"
+        elif numero_de_serie:
+            # Conexión normal al dispositivo físico
             aparato_id, aparato_nombre = obtener_aparato_por_serial(numero_de_serie)
             self.aparato_id = aparato_id  # Guardamos el ID del aparato detectado
             
             # Mostrar el nombre del dispositivo y el serial entre paréntesis
             if aparato_nombre and aparato_nombre != "No disponible":
-                if numero_de_serie == "0X0AB0":
-                    # Es el aparato de prueba
-                    texto_aparato = f"{aparato_nombre} ({numero_de_serie}) - MODO PRUEBA"
-                else:
-                    texto_aparato = f"{aparato_nombre} ({numero_de_serie})"
+                texto_aparato = f"{aparato_nombre} ({numero_de_serie})"
             else:
                 texto_aparato = f"Dispositivo {numero_de_serie}"
         else:
-            texto_aparato = "No disponible"
+            # No hay conexión al dispositivo y modo prueba no está activo
+            texto_aparato = "No disponible - Sin conexión"
             self.aparato_id = None
 
         # Mostrar el nombre del aparato en la interfaz
         self.entry_aparato.set(texto_aparato)
     
+    def refrescar_asignacion_aparato(self):
+        """Refrescar la asignación del aparato biométrico (útil cuando cambia el modo prueba)"""
+        self.asignar_aparato_biometrico()
+    
+    def verificar_modo_prueba_activo(self):
+        """Verifica si el modo prueba está activo en la base de datos"""
+        try:
+            conn = connect_db()
+            if not conn:
+                return False
+                
+            cursor = conn.cursor()
+            
+            # Verificar si el aparato de prueba está activo
+            cursor.execute("""
+                SELECT activo FROM aparatos_biometricos 
+                WHERE serial = '0X0AB0' 
+                LIMIT 1
+            """)
+            
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            if result:
+                return result[0]  # Retorna True si está activo, False si no
+            else:
+                return False  # No existe el aparato de prueba
+                
+        except Exception as e:
+            print(f"Error al verificar modo prueba: {e}")
+            return False
+    
     def obtener_id_mas_alto_k40(self):
         """Obtiene el ID más alto del dispositivo K40 y lo muestra en el campo ID usando la conexión existente"""
         # Verificar si estamos en modo prueba
-        es_modo_prueba = False
-        if self.aparato_id:
-            try:
-                conn = connect_db()
-                cursor = conn.cursor()
-                cursor.execute("SELECT serial FROM aparatos_biometricos WHERE id = %s", (self.aparato_id,))
-                resultado = cursor.fetchone()
-                cursor.close()
-                conn.close()
-                
-                if resultado and resultado[0] == "0X0AB0":
-                    es_modo_prueba = True
-            except Exception as e:
-                print(f"⚠️ Error al verificar modo prueba: {e}")
+        es_modo_prueba = self.verificar_modo_prueba_activo()
         
         if es_modo_prueba:
             # En modo prueba, generar un ID simulado
@@ -896,21 +1017,9 @@ class AgregarPostulante(tk.Toplevel):
         k40_actualizado = False  # Flag para verificar si se actualizó correctamente
         
         # Verificar si estamos en modo prueba
-        es_modo_prueba = False
-        if self.aparato_id:
-            try:
-                conn = connect_db()
-                cursor = conn.cursor()
-                cursor.execute("SELECT serial FROM aparatos_biometricos WHERE id = %s", (self.aparato_id,))
-                resultado = cursor.fetchone()
-                cursor.close()
-                conn.close()
-                
-                if resultado and resultado[0] == "0X0AB0":
-                    es_modo_prueba = True
-                    print("🔧 Modo prueba detectado - Saltando conexión K40")
-            except Exception as e:
-                print(f"⚠️ Error al verificar modo prueba: {e}")
+        es_modo_prueba = self.verificar_modo_prueba_activo()
+        if es_modo_prueba:
+            print("🔧 Modo prueba detectado - Saltando conexión K40")
 
         if not es_modo_prueba:
             self.mostrar_estado("Conectando al dispositivo K40...")
@@ -1012,7 +1121,7 @@ class AgregarPostulante(tk.Toplevel):
                 messagebox.showerror("Error", f"No se pudo actualizar el K40: {e}. No se guardará en la base de datos.")
                 return
         else:
-            # Modo prueba - generar UID simulado
+            # Modo prueba - generar UID simulado (solo detección automática)
             if es_modo_prueba:
                 import random
                 usuario_uid = random.randint(1000, 9999)  # UID simulado

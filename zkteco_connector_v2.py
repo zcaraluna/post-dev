@@ -592,6 +592,164 @@ class ZKTecoK40V2:
         except Exception as e:
             logger.error(f"Error al obtener registros de asistencia: {e}")
             return []
+    
+    def get_device_time(self) -> Optional[datetime]:
+        """
+        Obtener la hora actual del dispositivo
+        
+        Returns:
+            datetime con la hora del dispositivo o None si hay error
+        """
+        if not self.conn:
+            logger.error("No hay conexión activa")
+            return None
+        
+        try:
+            # Intentar obtener la hora del dispositivo
+            device_time = self.conn.get_time()
+            logger.info(f"Hora del dispositivo: {device_time}")
+            return device_time
+        except Exception as e:
+            logger.error(f"Error al obtener hora del dispositivo: {e}")
+            return None
+    
+    def set_device_time(self, new_time: datetime) -> bool:
+        """
+        Establecer la hora del dispositivo
+        
+        Args:
+            new_time: Nueva hora a establecer
+            
+        Returns:
+            True si se estableció correctamente, False en caso contrario
+        """
+        if not self.conn:
+            logger.error("No hay conexión activa")
+            return False
+        
+        try:
+            # Establecer la hora del dispositivo
+            self.conn.set_time(new_time)
+            logger.info(f"Hora del dispositivo establecida a: {new_time}")
+            return True
+        except Exception as e:
+            logger.error(f"Error al establecer hora del dispositivo: {e}")
+            return False
+    
+    def restart(self) -> bool:
+        """
+        Reiniciar el dispositivo
+        
+        Returns:
+            True si se reinició correctamente, False en caso contrario
+        """
+        if not self.conn:
+            logger.error("No hay conexión activa")
+            return False
+        
+        try:
+            # Reiniciar el dispositivo
+            self.conn.restart()
+            logger.info("Dispositivo reiniciado exitosamente")
+            return True
+        except Exception as e:
+            logger.error(f"Error al reiniciar dispositivo: {e}")
+            return False
+    
+    def clear_attendance(self) -> bool:
+        """
+        Limpiar todos los registros de asistencia del dispositivo
+        
+        Returns:
+            True si se limpiaron correctamente, False en caso contrario
+        """
+        if not self.conn:
+            logger.error("No hay conexión activa")
+            return False
+        
+        try:
+            # Limpiar registros de asistencia
+            self.conn.clear_attendance()
+            logger.info("Registros de asistencia limpiados exitosamente")
+            return True
+        except Exception as e:
+            logger.error(f"Error al limpiar registros de asistencia: {e}")
+            return False
+    
+    def clear_users(self) -> bool:
+        """
+        Limpiar todos los usuarios del dispositivo
+        
+        Returns:
+            True si se limpiaron correctamente, False en caso contrario
+        """
+        if not self.conn:
+            logger.error("No hay conexión activa")
+            return False
+        
+        try:
+            # Obtener lista de usuarios primero
+            users = self.conn.get_users()
+            if not users:
+                logger.info("No hay usuarios para limpiar")
+                return True
+            
+            logger.info(f"Encontrados {len(users)} usuarios para eliminar")
+            
+            # Debug: inspeccionar estructura del primer usuario
+            if users:
+                first_user = users[0]
+                logger.debug(f"Estructura del primer usuario: {type(first_user)}")
+                logger.debug(f"Atributos del primer usuario: {dir(first_user)}")
+                if hasattr(first_user, '__dict__'):
+                    logger.debug(f"Dict del primer usuario: {first_user.__dict__}")
+            
+            # Intentar primero con clear_all_users si está disponible
+            try:
+                if hasattr(self.conn, 'clear_all_users'):
+                    logger.info("Intentando limpiar usuarios con clear_all_users()")
+                    if self.conn.clear_all_users():
+                        logger.info("✅ Todos los usuarios eliminados con clear_all_users()")
+                        return True
+                    else:
+                        logger.warning("clear_all_users() falló, intentando eliminación individual")
+            except Exception as e:
+                logger.warning(f"clear_all_users() no disponible o falló: {e}")
+            
+            # Eliminar cada usuario individualmente
+            deleted_count = 0
+            for i, user in enumerate(users):
+                try:
+                    # Intentar diferentes formas de obtener el user_id
+                    user_id = None
+                    if hasattr(user, 'user_id'):
+                        user_id = user.user_id
+                    elif hasattr(user, 'uid'):
+                        user_id = user.uid
+                    elif isinstance(user, dict):
+                        user_id = user.get('user_id') or user.get('uid')
+                    else:
+                        # Si no podemos obtener el user_id, usar el índice
+                        user_id = i
+                        logger.warning(f"No se pudo obtener user_id para usuario {i}, usando índice")
+                    
+                    logger.debug(f"Intentando eliminar usuario {user_id}")
+                    
+                    if self.conn.delete_user(user_id):
+                        deleted_count += 1
+                        logger.debug(f"✅ Usuario {user_id} eliminado")
+                    else:
+                        logger.warning(f"❌ No se pudo eliminar usuario {user_id}")
+                        
+                except Exception as e:
+                    logger.warning(f"Error al eliminar usuario {i}: {e}")
+            
+            logger.info(f"Usuarios limpiados: {deleted_count} de {len(users)} eliminados exitosamente")
+            return deleted_count > 0 or len(users) == 0
+            
+        except Exception as e:
+            logger.error(f"Error al limpiar usuarios: {e}")
+            return False
 
 def test_connection(ip_address: str, port: int = 4370) -> bool:
     """

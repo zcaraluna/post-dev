@@ -137,6 +137,8 @@ class MenuPrincipal(tk.Frame):
         menubar.add_cascade(label="Gestión", menu=gestion_menu)
         gestion_menu.add_command(label="Lista de Postulantes", command=self.ver_lista_postulantes)
         gestion_menu.add_command(label="Estadísticas", command=self.ver_estadisticas)
+        gestion_menu.add_separator()
+        gestion_menu.add_command(label="Control de Asistencia", command=self.control_asistencia)
         
         # Menú Sistema
         sistema_menu = tk.Menu(menubar, tearoff=0)
@@ -268,7 +270,12 @@ class MenuPrincipal(tk.Frame):
         
         if verificar_permiso_silencioso(self.user_data, 'agregar_postulante'):
             from agregar_postulante import AgregarPostulante
-            AgregarPostulante(self, self.user_data)
+            # Crear la ventana de agregar postulante
+            ventana_agregar = AgregarPostulante(self, self.user_data)
+            
+            # Registrar como listener del modo prueba si existe la ventana de gestión ZKTeco
+            if hasattr(self, 'gestion_zkteco_window') and self.gestion_zkteco_window.winfo_exists():
+                self.gestion_zkteco_window.registrar_listener_modo_prueba(ventana_agregar)
         else:
             # Mostrar aviso específico para agregar postulante
             from tkinter import messagebox
@@ -285,7 +292,8 @@ class MenuPrincipal(tk.Frame):
         
         if puede_gestionar_zkteco(self.user_data):
             from gestion_zkteco import GestionZKTeco
-            GestionZKTeco(self, self.user_data)
+            # Mantener referencia a la ventana de gestión ZKTeco
+            self.gestion_zkteco_window = GestionZKTeco(self, self.user_data)
         else:
             # Mostrar aviso específico para ZKTeco
             from tkinter import messagebox
@@ -371,6 +379,23 @@ class MenuPrincipal(tk.Frame):
         """Abrir carga de cédulas con problemas judiciales"""
         from cargar_cedulas_problema_judicial import CargarCedulasProblemaJudicial
         CargarCedulasProblemaJudicial(self)
+    
+    def control_asistencia(self):
+        """Abrir control de asistencia"""
+        from privilegios_utils import verificar_permiso_silencioso
+        
+        if verificar_permiso_silencioso(self.user_data, 'control_asistencia'):
+            from control_asistencia import ControlAsistencia
+            ControlAsistencia(self, self.user_data)
+        else:
+            # Mostrar aviso específico para control de asistencia
+            from tkinter import messagebox
+            messagebox.showerror(
+                "Acceso Denegado", 
+                "No tiene permisos para acceder al control de asistencia.\n\n"
+                "Permiso requerido: control_asistencia\n\n"
+                "Contacte al administrador del sistema."
+            )
     
 
     def acerca_de(self):
