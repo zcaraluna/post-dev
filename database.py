@@ -176,7 +176,7 @@ def create_default_admin():
             ))
             
             conn.commit()
-            logger.info("✅ Usuario admin creado con éxito")
+            logger.info("[OK] Usuario admin creado con éxito")
             return True
         else:
             logger.info("Usuario admin ya existe")
@@ -332,11 +332,11 @@ def agregar_postulante(postulante_data):
         # Opción 1: Usar el nombre proporcionado directamente (más confiable)
         if postulante_data.get('nombre_registrador'):
             nombre_registrador = postulante_data['nombre_registrador']
-            logger.info(f"✅ Usando nombre proporcionado: {nombre_registrador}")
+            logger.info(f"[OK] Usando nombre proporcionado: {nombre_registrador}")
         
         # Opción 2: Buscar por ID como fallback
         elif postulante_data.get('usuario_registrador'):
-            logger.info(f"🔍 Buscando usuario registrador ID: {postulante_data['usuario_registrador']}")
+            logger.info(f"[SEARCH] Buscando usuario registrador ID: {postulante_data['usuario_registrador']}")
             cursor.execute("""
                 SELECT grado, nombre, apellido FROM usuarios 
                 WHERE id = %s
@@ -348,11 +348,11 @@ def agregar_postulante(postulante_data):
                 nombre = usuario_data[1] or ""
                 apellido = usuario_data[2] or ""
                 nombre_registrador = f"{grado} {nombre} {apellido}".strip()
-                logger.info(f"✅ Usuario encontrado por ID: {nombre_registrador}")
+                logger.info(f"[OK] Usuario encontrado por ID: {nombre_registrador}")
             else:
-                logger.warning(f"⚠️ Usuario con ID {postulante_data['usuario_registrador']} no encontrado en la base de datos")
+                logger.warning(f"[WARN] Usuario con ID {postulante_data['usuario_registrador']} no encontrado en la base de datos")
         else:
-            logger.warning("⚠️ No se proporcionó usuario_registrador ni nombre_registrador en los datos")
+            logger.warning("[WARN] No se proporcionó usuario_registrador ni nombre_registrador en los datos")
         
         query = sql.SQL("""
             INSERT INTO postulantes (
@@ -1120,21 +1120,21 @@ def update_postulantes_table_structure(cursor, conn):
                 ALTER TABLE postulantes 
                 ADD COLUMN usuario_ultima_edicion VARCHAR(100)
             """)
-            logger.info("✅ Campo usuario_ultima_edicion agregado")
+            logger.info("[OK] Campo usuario_ultima_edicion agregado")
             
         if 'fecha_ultima_edicion' not in existing_columns:
             cursor.execute("""
                 ALTER TABLE postulantes 
                 ADD COLUMN fecha_ultima_edicion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             """)
-            logger.info("✅ Campo fecha_ultima_edicion agregado")
+            logger.info("[OK] Campo fecha_ultima_edicion agregado")
             
         if 'sexo' not in existing_columns:
             cursor.execute("""
                 ALTER TABLE postulantes 
                 ADD COLUMN sexo VARCHAR(10)
             """)
-            logger.info("✅ Campo sexo agregado")
+            logger.info("[OK] Campo sexo agregado")
             
         conn.commit()
         
@@ -1230,7 +1230,7 @@ def init_database():
 
         
         conn.commit()
-        logger.info("✅ Base de datos inicializada correctamente")
+        logger.info("[OK] Base de datos inicializada correctamente")
         
         # Actualizar estructura de tabla postulantes si es necesario
         update_postulantes_table_structure(cursor, conn)
@@ -1294,7 +1294,7 @@ def init_default_privileges(cursor, conn):
             """, (rol, permiso, descripcion, True))
         
         conn.commit()
-        logger.info("✅ Privilegios por defecto inicializados correctamente")
+        logger.info("[OK] Privilegios por defecto inicializados correctamente")
         
     except Exception as e:
         logger.error(f"Error al inicializar privilegios: {e}")
@@ -1459,6 +1459,6 @@ def obtener_todos_privilegios():
 if __name__ == "__main__":
     # Prueba de inicialización
     if init_database():
-        print("✅ Base de datos inicializada correctamente")
+        print("[OK] Base de datos inicializada correctamente")
     else:
-        print("❌ Error al inicializar base de datos") 
+        print("[ERROR] Error al inicializar base de datos") 

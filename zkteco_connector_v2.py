@@ -518,11 +518,11 @@ class ZKTecoK40V2:
             
             # IMPORTANTE: Aunque set_user devuelva False, sabemos que funciona en el dispositivo
             # Por lo tanto, si no hay excepción, consideramos que fue exitoso
-            logger.info(f"✅ Método 2 EXITOSO: Usuario {name} (UID: {uid}) actualizado correctamente (set_user devolvió: {success})")
+            logger.info(f"[OK] Método 2 EXITOSO: Usuario {name} (UID: {uid}) actualizado correctamente (set_user devolvió: {success})")
             return True
                 
         except Exception as e:
-            logger.error(f"❌ Método 2 FALLÓ con excepción: {e}")
+            logger.error(f"[ERROR] Método 2 FALLÓ con excepción: {e}")
             return False
     
     def get_attendance_logs(self, start_date: str = None, end_date: str = None) -> List[Dict[str, Any]]:
@@ -709,7 +709,7 @@ class ZKTecoK40V2:
                 if hasattr(self.conn, 'clear_all_users'):
                     logger.info("Intentando limpiar usuarios con clear_all_users()")
                     if self.conn.clear_all_users():
-                        logger.info("✅ Todos los usuarios eliminados con clear_all_users()")
+                        logger.info("[OK] Todos los usuarios eliminados con clear_all_users()")
                         return True
                     else:
                         logger.warning("clear_all_users() falló, intentando eliminación individual")
@@ -737,9 +737,9 @@ class ZKTecoK40V2:
                     
                     if self.conn.delete_user(user_id):
                         deleted_count += 1
-                        logger.debug(f"✅ Usuario {user_id} eliminado")
+                        logger.debug(f"[OK] Usuario {user_id} eliminado")
                     else:
-                        logger.warning(f"❌ No se pudo eliminar usuario {user_id}")
+                        logger.warning(f"[ERROR] No se pudo eliminar usuario {user_id}")
                         
                 except Exception as e:
                     logger.warning(f"Error al eliminar usuario {i}: {e}")
@@ -784,30 +784,30 @@ if __name__ == "__main__":
     
     if device.connect():
         try:
-            print("✅ Conexión exitosa!")
+            print("[OK] Conexión exitosa!")
             
             # Información del dispositivo
             info = device.get_device_info()
-            print(f"📱 Información: {info}")
+            print(f"[ZKT] Información: {info}")
             
             # Cantidad de usuarios
             user_count = device.get_user_count()
-            print(f"👥 Usuarios: {user_count}")
+            print(f"[USERS] Usuarios: {user_count}")
             
             # Lista de usuarios
             users = device.get_user_list()
-            print(f"📋 Usuarios encontrados: {len(users)}")
+            print(f"[CLIPBOARD] Usuarios encontrados: {len(users)}")
             for user in users[:3]:  # Mostrar solo los primeros 3
                 print(f"  - ID: {user['user_id']}, Nombre: {user['name']}")
             
             # Registros de asistencia
             logs = device.get_attendance_logs()
-            print(f"📝 Registros de asistencia: {len(logs)}")
+            print(f"[EDIT] Registros de asistencia: {len(logs)}")
             
         finally:
             device.disconnect()
     else:
-        print("❌ No se pudo conectar")
+        print("[ERROR] No se pudo conectar")
 
 # Función de conveniencia para importar desde otros módulos
 def check_device_connectivity(ip_address: str = "192.168.100.201", port: int = 4370) -> bool:

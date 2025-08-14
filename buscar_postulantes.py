@@ -675,10 +675,10 @@ class BuscarPostulantes(tk.Toplevel):
                         else:
                             fecha_formateada = str(fecha)
                         
-                        historial_text.insert('end', f"📝 EDICIÓN #{len(historial_ediciones) - i + 1}\n", 'titulo')
-                        historial_text.insert('end', f"👤 Usuario: {usuario}\n", 'usuario')
+                        historial_text.insert('end', f"[EDIT] EDICIÓN #{len(historial_ediciones) - i + 1}\n", 'titulo')
+                        historial_text.insert('end', f"[USER] Usuario: {usuario}\n", 'usuario')
                         historial_text.insert('end', f"🕒 Fecha: {fecha_formateada}\n", 'fecha')
-                        historial_text.insert('end', f"🔧 Cambios realizados:\n", 'subtitulo')
+                        historial_text.insert('end', f"[BUILD] Cambios realizados:\n", 'subtitulo')
                         
                         # Mostrar cada cambio en una línea separada
                         cambios_lista = cambios.split('; ')

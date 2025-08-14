@@ -168,11 +168,11 @@ if __name__ == "__main__":
     
     # Ping silencioso
     ping_result = silent_ping(test_ip)
-    print(f"Ping silencioso: {'✅ Exitoso' if ping_result else '❌ Falló'}")
+    print(f"Ping silencioso: {'[OK] Exitoso' if ping_result else '[ERROR] Falló'}")
     
     # Conectividad de red
     network_result = test_network_connectivity(test_ip, 4370)
-    print(f"Conectividad de red: {'✅ Exitoso' if network_result else '❌ Falló'}")
+    print(f"Conectividad de red: {'[OK] Exitoso' if network_result else '[ERROR] Falló'}")
     
     # Información detallada
     info = get_network_info(test_ip)

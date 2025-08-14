@@ -31,17 +31,17 @@ def obtener_serial_desde_hardware(ip="192.168.100.201", puerto=4370, intentos=3)
         
         for intento in range(intentos):
             try:
-                print(f"🔍 Intentando conectar con {ip}:{puerto} (Intento {intento + 1}/{intentos})")
+                print(f"[SEARCH] Intentando conectar con {ip}:{puerto} (Intento {intento + 1}/{intentos})")
                 if zkteco.connect():
                     # Obtener el número de serie del aparato conectado
                     serial = zkteco.get_device_info().get('serial_number', 'No disponible')
                     zkteco.disconnect()
                     
                     if serial:
-                        print(f"✅ Número de serie detectado: {serial}")
+                        print(f"[OK] Número de serie detectado: {serial}")
                         return serial
                     else:
-                        print("⚠️ No se obtuvo el número de serie.")
+                        print("[WARN] No se obtuvo el número de serie.")
                         
             except Exception as e:
                 print(f"⛔ Error en la conexión: {e}")
@@ -50,7 +50,7 @@ def obtener_serial_desde_hardware(ip="192.168.100.201", puerto=4370, intentos=3)
         print(f"⛔ Error al crear conexión ZKTeco: {e}")
     
     # Si llegamos aquí, todos los intentos fallaron
-    print("⚠️ Todos los intentos de conexión fallaron. No se puede conectar al dispositivo.")
+    print("[WARN] Todos los intentos de conexión fallaron. No se puede conectar al dispositivo.")
     return None  # No hay conexión disponible
 
 def obtener_aparato_por_serial(serial_number):
@@ -105,8 +105,8 @@ class AgregarPostulante(tk.Toplevel):
         self.registrador_string = f"{grado} {nombre} {apellido}".strip()
         
         # Log para debug
-        print(f"🔍 Debug - Registrador string: '{self.registrador_string}'")
-        print(f"🔍 Debug - User data: {self.user_data}")
+        print(f"[SEARCH] Debug - Registrador string: '{self.registrador_string}'")
+        print(f"[SEARCH] Debug - User data: {self.user_data}")
 
         # Frame principal con padding y estilo
         frame_main = tk.Frame(self, bg='#f0f0f0', padx=30, pady=20)
@@ -581,11 +581,11 @@ class AgregarPostulante(tk.Toplevel):
         # Verificar el estado de las conexiones
         if self.zkteco_connected and self.zkteco:
             # Sistema completamente funcional
-            self.status_label.config(text="✅ Sistema listo - QUIRA conectado", fg='#2E902E', font=('Segoe UI', 10, 'bold'))
+            self.status_label.config(text="[OK] Sistema listo - QUIRA conectado", fg='#2E902E', font=('Segoe UI', 10, 'bold'))
             self.progress_bar.config(width=0)
         elif self.verificar_modo_prueba_activo():
             # Modo prueba activo en la base de datos
-            self.status_label.config(text="🔧 Modo prueba activado", fg='#f39c12', font=('Segoe UI', 10, 'bold'))
+            self.status_label.config(text="[BUILD] Modo prueba activado", fg='#f39c12', font=('Segoe UI', 10, 'bold'))
             self.progress_bar.config(width=0)
             
             # Completar inicialización en modo prueba
@@ -601,7 +601,7 @@ class AgregarPostulante(tk.Toplevel):
         self.progress_bar.config(width=0)
         
         # Mostrar messagebox con opciones
-        mensaje = """⚠️ No se pudo conectar al dispositivo biométrico
+        mensaje = """[WARN] No se pudo conectar al dispositivo biométrico
 
 Por favor verifique:
 • El dispositivo biométrico esté encendido
@@ -622,13 +622,13 @@ Por favor verifique:
             self.reintentar_conexion()
         else:
             # Usuario canceló - mostrar estado de error
-            self.status_label.config(text="❌ Conexión cancelada por el usuario", fg='#e74c3c', font=('Segoe UI', 10, 'bold'))
+            self.status_label.config(text="[ERROR] Conexión cancelada por el usuario", fg='#e74c3c', font=('Segoe UI', 10, 'bold'))
             self.progress_bar.config(width=0)
     
     def reintentar_conexion(self):
         """Reintenta la conexión al dispositivo biométrico"""
         # Mostrar estado de reconexión
-        self.mostrar_estado("🔄 Reintentando conexión al dispositivo...")
+        self.mostrar_estado("[REFRESH] Reintentando conexión al dispositivo...")
         self.animar_progreso()
         
         # Ejecutar reconexión después de un breve delay
@@ -649,7 +649,7 @@ Por favor verifique:
             
             if self.zkteco_connected and self.zkteco:
                 # Conexión exitosa
-                self.mostrar_estado("✅ Conexión restablecida exitosamente")
+                self.mostrar_estado("[OK] Conexión restablecida exitosamente")
                 self.completar_progreso()
                 self.after(1000, self.finalizar_reconexion_exitosa)
             else:
@@ -675,7 +675,7 @@ Por favor verifique:
             "Por favor verifique la conectividad y vuelva a intentar."
         )
         # Mostrar estado de error
-        self.status_label.config(text="❌ Conexión fallida", fg='#e74c3c', font=('Segoe UI', 10, 'bold'))
+        self.status_label.config(text="[ERROR] Conexión fallida", fg='#e74c3c', font=('Segoe UI', 10, 'bold'))
         self.progress_bar.config(width=0)
     
 
@@ -689,9 +689,9 @@ Por favor verifique:
             try:
                 device_info = self.zkteco.get_device_info()
                 numero_de_serie = device_info.get('serial_number', None)
-                print(f"✅ Número de serie obtenido desde conexión existente: {numero_de_serie}")
+                print(f"[OK] Número de serie obtenido desde conexión existente: {numero_de_serie}")
             except Exception as e:
-                print(f"⚠️ Error al obtener serial desde conexión existente: {e}")
+                print(f"[WARN] Error al obtener serial desde conexión existente: {e}")
                 # Fallback a la función original
                 numero_de_serie = obtener_serial_desde_hardware()
         else:
@@ -771,11 +771,11 @@ Por favor verifique:
             import random
             uid_simulado = random.randint(1000, 9999)
             self.entry_id_k40.set(str(uid_simulado))
-            print(f"🔧 Modo prueba: ID simulado generado: {uid_simulado}")
+            print(f"[BUILD] Modo prueba: ID simulado generado: {uid_simulado}")
             return
         
         if not self.zkteco_connected or not self.zkteco:
-            print("⚠️ No hay conexión activa para obtener el ID más alto")
+            print("[WARN] No hay conexión activa para obtener el ID más alto")
             self.entry_id_k40.set("")
             return
             
@@ -787,9 +787,9 @@ Por favor verifique:
                 # Encontrar el UID más alto entre los últimos 5 usuarios
                 uid_mas_alto = max(usuarios, key=lambda u: int(u['uid']))['uid']
                 self.entry_id_k40.set(str(uid_mas_alto))
-                print(f"✅ ID más alto detectado en K40 (últimos 5 usuarios): {uid_mas_alto}")
+                print(f"[OK] ID más alto detectado en K40 (últimos 5 usuarios): {uid_mas_alto}")
             else:
-                print("⚠️ No hay usuarios registrados en el K40")
+                print("[WARN] No hay usuarios registrados en el K40")
                 self.entry_id_k40.set("")
         except Exception as e:
             print(f"⛔ Error al obtener ID más alto del K40: {e}")
@@ -801,10 +801,10 @@ Por favor verifique:
             self.zkteco = ZKTecoK40V2('192.168.100.201', 4370)
             if self.zkteco.connect():
                 self.zkteco_connected = True
-                print("✅ Conexión ZKTeco establecida y mantenida")
+                print("[OK] Conexión ZKTeco establecida y mantenida")
             else:
                 self.zkteco_connected = False
-                print("⚠️ No se pudo establecer conexión ZKTeco")
+                print("[WARN] No se pudo establecer conexión ZKTeco")
         except Exception as e:
             self.zkteco_connected = False
             print(f"⛔ Error al establecer conexión ZKTeco: {e}")
@@ -815,9 +815,9 @@ Por favor verifique:
             try:
                 self.zkteco.disconnect()
                 self.zkteco_connected = False
-                print("✅ Conexión ZKTeco cerrada")
+                print("[OK] Conexión ZKTeco cerrada")
             except Exception as e:
-                print(f"⚠️ Error al cerrar conexión ZKTeco: {e}")
+                print(f"[WARN] Error al cerrar conexión ZKTeco: {e}")
     
     def on_closing(self):
         """Maneja el cierre de la ventana y cierra la conexión ZKTeco"""
@@ -989,7 +989,7 @@ Por favor verifique:
         id_manual = self.entry_id_k40.get().strip()
         
         # Log para debug
-        print(f"🔍 Debug - Guardando registrado_por: '{registrado_por}'")
+        print(f"[SEARCH] Debug - Guardando registrado_por: '{registrado_por}'")
 
         # Verificar si hay un aparato biométrico detectado
         if self.aparato_id is None:
@@ -1019,7 +1019,7 @@ Por favor verifique:
         # Verificar si estamos en modo prueba
         es_modo_prueba = self.verificar_modo_prueba_activo()
         if es_modo_prueba:
-            print("🔧 Modo prueba detectado - Saltando conexión K40")
+            print("[BUILD] Modo prueba detectado - Saltando conexión K40")
 
         if not es_modo_prueba:
             self.mostrar_estado("Conectando al dispositivo K40...")
@@ -1105,7 +1105,7 @@ Por favor verifique:
                     # Verificar si la actualización en K40 fue exitosa
                     if resultado_k40:
                         k40_actualizado = True
-                        print(f"✅ Usuario {usuario_id_actual} actualizado en K40 sin perder la huella.")
+                        print(f"[OK] Usuario {usuario_id_actual} actualizado en K40 sin perder la huella.")
                     else:
                         self.ocultar_estado()
                         messagebox.showerror("Error", "No se pudo actualizar el usuario en el dispositivo K40. No se guardará en la base de datos.")
@@ -1126,7 +1126,7 @@ Por favor verifique:
                 import random
                 usuario_uid = random.randint(1000, 9999)  # UID simulado
                 k40_actualizado = True
-                print(f"🔧 Modo prueba: UID simulado generado: {usuario_uid}")
+                print(f"[BUILD] Modo prueba: UID simulado generado: {usuario_uid}")
 
         # PASO 2: SOLO SI EL K40 SE ACTUALIZÓ CORRECTAMENTE, GUARDAR EN LA BASE DE DATOS
         if not k40_actualizado:
@@ -1143,7 +1143,7 @@ Por favor verifique:
         if problema_judicial:
             # Mostrar diálogo de confirmación para problemas judiciales
             respuesta = messagebox.askyesno(
-                "⚠️ ADVERTENCIA - Problema Judicial",
+                "[WARN] ADVERTENCIA - Problema Judicial",
                 f"ADVERTENCIA: Este postulante con CI {cedula} podría tener problemas judiciales.\n\n"
                 f"Es recomendable verificar la situación real del mismo antes de continuar.\n\n"
                 f"¿Quiere proceder con el registro de todos modos?",
@@ -1202,7 +1202,7 @@ Por favor verifique:
                     messagebox.showinfo(
                         "Registro Confirmado",
                         f"Postulante registrado correctamente en el aparato {aparato_nombre}, con UID {usuario_uid}.\n\n"
-                        "⚠️ Nota: Se registró a pesar del problema judicial detectado."
+                        "[WARN] Nota: Se registró a pesar del problema judicial detectado."
                     )
                 else:
                     messagebox.showinfo(

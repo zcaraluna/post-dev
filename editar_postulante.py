@@ -385,7 +385,7 @@ class EditarPostulante(tk.Toplevel):
                     messagebox.showinfo("Observaciones", "No hay observaciones existentes para este postulante.")
             
             # Botón para ver observaciones existentes
-            btn_ver_obs = tk.Button(parent, text="📋 Ver existentes", 
+            btn_ver_obs = tk.Button(parent, text="[CLIPBOARD] Ver existentes", 
                                    command=mostrar_observaciones_existentes,
                                    font=('Segoe UI', 8), fg='white', bg='#95a5a6',
                                    relief='flat', padx=10, pady=2)
@@ -715,8 +715,8 @@ class EditarPostulante(tk.Toplevel):
             if observaciones_actuales and nuevas_observaciones:
                 messagebox.showinfo("Éxito", 
                     "Postulante actualizado correctamente.\n\n"
-                    "✅ Las nuevas observaciones se han agregado a las existentes.\n"
-                    "📝 Total de observaciones actualizadas.")
+                    "[OK] Las nuevas observaciones se han agregado a las existentes.\n"
+                    "[EDIT] Total de observaciones actualizadas.")
             else:
                 messagebox.showinfo("Éxito", "Postulante actualizado correctamente.")
             

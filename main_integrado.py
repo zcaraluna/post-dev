@@ -4,6 +4,17 @@ Sistema QUIRA
 Punto de entrada principal del sistema
 """
 
+# Importar silent_wrapper optimizado para ZKTeco PRIMERO para evitar ventanas CMD
+try:
+    import silent_wrapper_zkteco
+    print("[OK] Silent wrapper ZKTeco cargado correctamente")
+except ImportError:
+    try:
+        import silent_wrapper
+        print("[OK] Silent wrapper básico cargado correctamente")
+    except ImportError:
+        print("[WARN] No se pudo cargar ningún silent wrapper")
+
 import tkinter as tk
 from tkinter import messagebox
 import sys
@@ -73,34 +84,34 @@ def check_zkteco_connection():
         
         # Intentar conectar al dispositivo
         if test_connection("192.168.100.201", 4370):
-            print("✅ Conexión ZKTeco verificada")
+            print("[OK] Conexión ZKTeco verificada")
             return True
         else:
-            print("⚠️ No se pudo conectar al dispositivo ZKTeco")
+            print("[WARN] No se pudo conectar al dispositivo ZKTeco")
             print("   El sistema funcionará sin el dispositivo biométrico")
             return False
             
     except Exception as e:
-        print(f"⚠️ Error al verificar ZKTeco: {e}")
+        print(f"[WARN] Error al verificar ZKTeco: {e}")
         return False
 
 def main():
     """Función principal del sistema"""
-    print("🚀 Iniciando Sistema QUIRA")
+    print("[INIT] Iniciando Sistema QUIRA")
     print("=" * 50)
     
     # Verificar dependencias
-    print("📦 Verificando dependencias...")
+    print("[DEPS] Verificando dependencias...")
     if not check_dependencies():
         return
     
     # Verificar base de datos
-    print("🗄️ Verificando base de datos...")
+    print("[DB] Verificando base de datos...")
     if not check_database():
         return
     
     # Verificar ZKTeco (opcional)
-    print("📱 Verificando dispositivo ZKTeco...")
+    print("[ZKT] Verificando dispositivo ZKTeco...")
     zkteco_available = check_zkteco_connection()
     
     # Crear ventana principal
@@ -111,15 +122,15 @@ def main():
     try:
         from icon_utils import set_large_256_icon
         if set_large_256_icon(root):
-            print("✅ Icono de 256px configurado correctamente")
+            print("[OK] Icono de 256px configurado correctamente")
     except ImportError:
-        print("⚠️ No se pudo importar icon_utils")
+        print("[WARN] No se pudo importar icon_utils")
     
     # Mostrar estado del sistema
     if zkteco_available:
-        status_msg = "✅ Sistema listo\n✅ Base de datos conectada\n✅ ZKTeco disponible"
+        status_msg = "[OK] Sistema listo\n[OK] Base de datos conectada\n[OK] ZKTeco disponible"
     else:
-        status_msg = "✅ Sistema listo\n✅ Base de datos conectada\n⚠️ ZKTeco no disponible"
+        status_msg = "[OK] Sistema listo\n[OK] Base de datos conectada\n[WARN] ZKTeco no disponible"
     
     # Crear ventana de login
     try:
@@ -138,15 +149,15 @@ def main():
         # Hacer la ventana no redimensionable para mantener el tamaño del contenido
         root.resizable(False, False)
         
-        print("✅ Sistema iniciado correctamente")
-        print(f"📊 Estado: {status_msg}")
+        print("[OK] Sistema iniciado correctamente")
+        print(f"[STATUS] Estado: {status_msg}")
         
         # Iniciar loop principal
         root.mainloop()
         
     except Exception as e:
         messagebox.showerror("Error", f"Error al iniciar el sistema: {e}")
-        print(f"❌ Error al iniciar: {e}")
+        print(f"[ERROR] Error al iniciar: {e}")
 
 if __name__ == "__main__":
     main() 

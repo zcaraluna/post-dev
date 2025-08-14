@@ -179,7 +179,7 @@ class GestionUsuarios(tk.Toplevel):
                 
         except Exception as e:
             # Si hay error, simplemente continuar sin imagen
-            print(f"⚠️ Error cargando imagen institucional: {e}")
+            print(f"[WARN] Error cargando imagen institucional: {e}")
             pass
         
     def create_table(self, parent):

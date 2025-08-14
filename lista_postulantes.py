@@ -86,12 +86,12 @@ class ListaPostulantes(tk.Toplevel):
                 new_width = int(self.institutional_image.width * ratio)
                 self.institutional_image = self.institutional_image.resize((new_width, max_height), Image.Resampling.LANCZOS)
                 self.institutional_image_tk = ImageTk.PhotoImage(self.institutional_image)
-                print(f"✅ Imagen institucional cargada desde: {image_path}")
+                print(f"[OK] Imagen institucional cargada desde: {image_path}")
             else:
                 self.institutional_image_tk = None
-                print("⚠️ No se encontró la imagen institucional")
+                print("[WARN] No se encontró la imagen institucional")
         except Exception as e:
-            print(f"❌ Error al cargar imagen institucional: {e}")
+            print(f"[ERROR] Error al cargar imagen institucional: {e}")
             self.institutional_image_tk = None
         
     def setup_ui(self):
@@ -959,10 +959,10 @@ class ListaPostulantes(tk.Toplevel):
                         else:
                             fecha_formateada = str(fecha)
                         
-                        historial_text.insert('end', f"📝 EDICIÓN #{len(historial_ediciones) - i + 1}\n", 'titulo')
-                        historial_text.insert('end', f"👤 Usuario: {usuario}\n", 'usuario')
+                        historial_text.insert('end', f"[EDIT] EDICIÓN #{len(historial_ediciones) - i + 1}\n", 'titulo')
+                        historial_text.insert('end', f"[USER] Usuario: {usuario}\n", 'usuario')
                         historial_text.insert('end', f"🕒 Fecha: {fecha_formateada}\n", 'fecha')
-                        historial_text.insert('end', f"🔧 Cambios realizados:\n", 'subtitulo')
+                        historial_text.insert('end', f"[BUILD] Cambios realizados:\n", 'subtitulo')
                         
                         # Mostrar cada cambio en una línea separada
                         cambios_lista = cambios.split('; ')
@@ -1046,7 +1046,7 @@ class ListaPostulantes(tk.Toplevel):
                                 style='Accent.TButton')
         edit_button.pack(side='left', padx=(0, 10), pady=10)
         
-        delete_button = ttk.Button(button_frame, text="🗑️ Eliminar", 
+        delete_button = ttk.Button(button_frame, text="[DELETE] Eliminar", 
                                   command=lambda: self.delete_postulante(values),
                                   style='Accent.TButton')
         delete_button.pack(side='left', padx=(0, 10), pady=10)

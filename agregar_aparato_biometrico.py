@@ -55,7 +55,7 @@ def agregar_aparato_biometrico(nombre, serial, ip_address=None, puerto=4370, ubi
         
         conn.commit()
         
-        logger.info(f"✅ Aparato biométrico agregado exitosamente:")
+        logger.info(f"[OK] Aparato biométrico agregado exitosamente:")
         logger.info(f"   ID: {aparato_id}")
         logger.info(f"   Nombre: {nombre}")
         logger.info(f"   Serial: {serial}")
@@ -97,10 +97,10 @@ def listar_aparatos_biometricos():
         aparatos = cursor.fetchall()
         
         if not aparatos:
-            print("📋 No hay aparatos biométricos registrados en la base de datos")
+            print("[CLIPBOARD] No hay aparatos biométricos registrados en la base de datos")
             return True
         
-        print("📋 APARATOS BIOMÉTRICOS REGISTRADOS:")
+        print("[CLIPBOARD] APARATOS BIOMÉTRICOS REGISTRADOS:")
         print("=" * 80)
         print(f"{'ID':<4} {'Nombre':<20} {'Serial':<15} {'IP':<15} {'Puerto':<6} {'Estado':<8}")
         print("-" * 80)
@@ -122,18 +122,18 @@ def listar_aparatos_biometricos():
 
 def main():
     """Función principal"""
-    print("🔧 GESTOR DE APARATOS BIOMÉTRICOS")
+    print("[BUILD] GESTOR DE APARATOS BIOMÉTRICOS")
     print("=" * 50)
     
     if len(sys.argv) < 3:
-        print("❌ Uso incorrecto")
-        print("\n💡 USO:")
+        print("[ERROR] Uso incorrecto")
+        print("\n[TIP] USO:")
         print("  python agregar_aparato_biometrico.py <NOMBRE> <SERIAL> [IP] [PUERTO] [UBICACION]")
-        print("\n📝 EJEMPLOS:")
+        print("\n[EDIT] EJEMPLOS:")
         print("  python agregar_aparato_biometrico.py 'ANAPOL 2' 'PAS4241300509'")
         print("  python agregar_aparato_biometrico.py 'ANAPOL 2' 'PAS4241300509' '192.168.100.202'")
         print("  python agregar_aparato_biometrico.py 'ANAPOL 2' 'PAS4241300509' '192.168.100.202' 4370 'Oficina Principal'")
-        print("\n📋 COMANDOS ESPECIALES:")
+        print("\n[CLIPBOARD] COMANDOS ESPECIALES:")
         print("  python agregar_aparato_biometrico.py --list")
         print("  python agregar_aparato_biometrico.py --help")
         sys.exit(1)
@@ -147,13 +147,13 @@ def main():
     
     # Comando especial para ayuda
     if sys.argv[1] == "--help":
-        print("🔧 GESTOR DE APARATOS BIOMÉTRICOS - AYUDA")
+        print("[BUILD] GESTOR DE APARATOS BIOMÉTRICOS - AYUDA")
         print("=" * 50)
-        print("\n📝 FUNCIONES:")
+        print("\n[EDIT] FUNCIONES:")
         print("  • Agregar nuevo aparato biométrico")
         print("  • Listar aparatos existentes")
         print("  • Verificar duplicados")
-        print("\n📋 PARÁMETROS:")
+        print("\n[CLIPBOARD] PARÁMETROS:")
         print("  NOMBRE    : Nombre descriptivo del aparato")
         print("  SERIAL    : Número de serie único del dispositivo")
         print("  IP        : Dirección IP del aparato (opcional)")
@@ -168,7 +168,7 @@ def main():
     puerto = int(sys.argv[4]) if len(sys.argv) > 4 else 4370
     ubicacion = sys.argv[5] if len(sys.argv) > 5 else None
     
-    print(f"🎯 Agregando aparato biométrico:")
+    print(f"[TARGET] Agregando aparato biométrico:")
     print(f"   Nombre: {nombre}")
     print(f"   Serial: {serial}")
     if ip_address:
@@ -179,12 +179,12 @@ def main():
     
     # Agregar aparato
     if agregar_aparato_biometrico(nombre, serial, ip_address, puerto, ubicacion):
-        print("✅ APARATO AGREGADO EXITOSAMENTE")
-        print("\n📋 Lista actualizada de aparatos:")
+        print("[OK] APARATO AGREGADO EXITOSAMENTE")
+        print("\n[CLIPBOARD] Lista actualizada de aparatos:")
         listar_aparatos_biometricos()
         sys.exit(0)
     else:
-        print("❌ ERROR AL AGREGAR APARATO")
+        print("[ERROR] ERROR AL AGREGAR APARATO")
         sys.exit(1)
 
 if __name__ == "__main__":

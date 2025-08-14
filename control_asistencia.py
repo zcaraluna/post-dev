@@ -119,9 +119,13 @@ class ControlAsistencia(tk.Toplevel):
         self.search_btn = ttk.Button(filters_frame, text="Buscar", command=self.search_logs)
         self.search_btn.grid(row=1, column=5, sticky='w', pady=(5, 0))
         
+        # Botón descargar (al lado del botón buscar)
+        self.download_btn = ttk.Button(filters_frame, text="Descargar", command=self.download_logs, width=12)
+        self.download_btn.grid(row=1, column=6, sticky='w', pady=(5, 0), padx=(10, 0))
+        
         # Botón limpiar (en su posición original)
-        self.clear_btn = ttk.Button(filters_frame, text="Limpiar filtros", command=self.clear_filters)
-        self.clear_btn.grid(row=0, column=6, padx=(0, 10))
+        self.clear_btn = ttk.Button(filters_frame, text="Limpiar filtros", command=self.clear_filters, width=12)
+        self.clear_btn.grid(row=0, column=6, sticky='w', padx=(10, 10))
         
         # Frame para ordenamiento
         sort_frame = ttk.Frame(filters_frame)
@@ -360,10 +364,10 @@ class ControlAsistencia(tk.Toplevel):
                     # Cargar logs automáticamente
                     self.after(0, self.search_logs)
                 else:
-                    self.after(0, lambda: self.device_info_label.config(text="❌ Error: No se pudo conectar al dispositivo", foreground='#e74c3c'))
+                    self.after(0, lambda: self.device_info_label.config(text="[ERROR] Error: No se pudo conectar al dispositivo", foreground='#e74c3c'))
                     
             except Exception as e:
-                self.after(0, lambda: self.device_info_label.config(text=f"❌ Error de conexión: {str(e)}", foreground='#e74c3c'))
+                self.after(0, lambda: self.device_info_label.config(text=f"[ERROR] Error de conexión: {str(e)}", foreground='#e74c3c'))
         
         threading.Thread(target=connect_thread, daemon=True).start()
         
@@ -378,7 +382,7 @@ class ControlAsistencia(tk.Toplevel):
                 self.zkteco_device = None
         
         self.connected = False
-        self.device_info_label.config(text="❌ Desconectado", foreground='#e74c3c')
+        self.device_info_label.config(text="[ERROR] Desconectado", foreground='#e74c3c')
         
         # Limpiar datos
         self.clear_results()
@@ -390,14 +394,14 @@ class ControlAsistencia(tk.Toplevel):
     def search_logs(self):
         """Buscar logs de asistencia"""
         if not self.connected:
-            self.results_info.set("❌ No hay conexión al dispositivo")
+            self.results_info.set("[ERROR] No hay conexión al dispositivo")
             return
         
         # Limpiar resultados anteriores
         self.clear_results()
         
         # Mostrar indicador de carga
-        self.results_info.set("🔄 Cargando registros...")
+        self.results_info.set("[REFRESH] Cargando registros...")
         
         def search_thread():
             try:
@@ -708,6 +712,73 @@ class ControlAsistencia(tk.Toplevel):
         # Deshabilitar controles de paginación
         self.prev_btn.config(state='disabled')
         self.next_btn.config(state='disabled')
+        
+    def download_logs(self):
+        """Descargar logs filtrados actuales a archivo CSV"""
+        if not self.all_logs:
+            messagebox.showwarning("Advertencia", "No hay datos para descargar")
+            return
+        
+        try:
+            from tkinter import filedialog
+            import csv
+            
+            # Solicitar ubicación para guardar
+            filename = filedialog.asksaveasfilename(
+                defaultextension=".csv",
+                filetypes=[("Archivos CSV", "*.csv"), ("Todos los archivos", "*.*")],
+                title="Descargar registros de asistencia"
+            )
+            
+            if filename:
+                with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+                    # Definir campos del CSV (sin estado)
+                    fieldnames = ['uid_k40', 'nombre', 'fecha', 'hora']
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
+                    
+                    # Escribir todos los logs filtrados
+                    for log in self.all_logs:
+                        # Procesar timestamp igual que en update_results
+                        timestamp = log.get('timestamp', None)
+                        if timestamp:
+                            try:
+                                # Si timestamp es ya un objeto datetime
+                                if isinstance(timestamp, datetime):
+                                    dt = timestamp
+                                else:
+                                    # Si es un número, convertir a datetime
+                                    dt = datetime.fromtimestamp(timestamp)
+                                
+                                date = dt.strftime('%d/%m/%Y')
+                                time = dt.strftime('%H:%M:%S')
+                            except Exception as e:
+                                print(f"DEBUG: Error convirtiendo timestamp {timestamp}: {e}")
+                                date = "N/A"
+                                time = "N/A"
+                        else:
+                            date = "N/A"
+                            time = "N/A"
+                        
+                        # Obtener nombre del usuario igual que en update_results
+                        user_id = log.get('user_id', 'N/A')
+                        if user_id != 'N/A':
+                            nombre_usuario = self.nombres_usuarios.get(str(user_id), "")
+                        else:
+                            nombre_usuario = ""
+                        
+                        writer.writerow({
+                            'uid_k40': user_id,
+                            'nombre': nombre_usuario,
+                            'fecha': date,
+                            'hora': time
+                        })
+                
+                messagebox.showinfo("Éxito", f"Se descargaron {len(self.all_logs)} registros a {filename}")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al descargar registros: {e}")
+            print(f"DEBUG: Error en download_logs: {e}")
         
     def on_closing(self):
         """Manejar cierre de ventana"""

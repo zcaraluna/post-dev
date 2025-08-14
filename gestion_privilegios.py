@@ -130,7 +130,7 @@ class GestionPrivilegios(tk.Toplevel):
                 img_label.pack(pady=(0, 10))
                 
         except Exception as e:
-            print(f"⚠️ No se pudo cargar la imagen del instituto: {e}")
+            print(f"[WARN] No se pudo cargar la imagen del instituto: {e}")
     
     def create_role_tabs(self):
         """Crear pestañas para cada rol"""
@@ -256,7 +256,7 @@ class GestionPrivilegios(tk.Toplevel):
                 
                 # Agregar privilegios
                 for privilegio in privilegios:
-                    estado = "✅ Activo" if privilegio['activo'] else "❌ Inactivo"
+                    estado = "[OK] Activo" if privilegio['activo'] else "[ERROR] Inactivo"
                     tree.insert('', 'end', values=(
                         privilegio['permiso'],
                         privilegio['descripcion'],
@@ -289,7 +289,7 @@ class GestionPrivilegios(tk.Toplevel):
                     privilegio_actual['activo'] = nuevo_estado
                     
                     # Actualizar vista
-                    estado_texto = "✅ Activo" if nuevo_estado else "❌ Inactivo"
+                    estado_texto = "[OK] Activo" if nuevo_estado else "[ERROR] Inactivo"
                     tree.item(item, values=(permiso, values[1], estado_texto))
                     
                     messagebox.showinfo("Éxito", f"Privilegio '{permiso}' para rol '{rol}' actualizado correctamente")

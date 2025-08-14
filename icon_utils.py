@@ -49,14 +49,14 @@ def set_window_icon(window, icon_filename="quiraXXXL.png", large_icon=True):
             
             return True
         else:
-            print(f"⚠️ No se encontró el icono en: {icon_path}")
+            print(f"[WARN] No se encontró el icono en: {icon_path}")
             return False
             
     except ImportError:
-        print("⚠️ Pillow no está instalado para cargar el icono")
+        print("[WARN] Pillow no está instalado para cargar el icono")
         return False
     except Exception as e:
-        print(f"⚠️ No se pudo cargar el icono: {e}")
+        print(f"[WARN] No se pudo cargar el icono: {e}")
         return False
 
 def set_extra_large_icon(window, icon_filename="quiraXXXL.png"):
@@ -97,14 +97,14 @@ def set_extra_large_icon(window, icon_filename="quiraXXXL.png"):
             
             return True
         else:
-            print(f"⚠️ No se encontró el icono en: {icon_path}")
+            print(f"[WARN] No se encontró el icono en: {icon_path}")
             return False
             
     except ImportError:
-        print("⚠️ Pillow no está instalado para cargar el icono")
+        print("[WARN] Pillow no está instalado para cargar el icono")
         return False
     except Exception as e:
-        print(f"⚠️ No se pudo cargar el icono extra grande: {e}")
+        print(f"[WARN] No se pudo cargar el icono extra grande: {e}")
         return False
 
 def set_large_256_icon(window, icon_filename="quiraXXXL.png"):
@@ -145,12 +145,12 @@ def set_large_256_icon(window, icon_filename="quiraXXXL.png"):
             
             return True
         else:
-            print(f"⚠️ No se encontró el icono en: {icon_path}")
+            print(f"[WARN] No se encontró el icono en: {icon_path}")
             return False
             
     except ImportError:
-        print("⚠️ Pillow no está instalado para cargar el icono")
+        print("[WARN] Pillow no está instalado para cargar el icono")
         return False
     except Exception as e:
-        print(f"⚠️ No se pudo cargar el icono de 256px: {e}")
+        print(f"[WARN] No se pudo cargar el icono de 256px: {e}")
         return False

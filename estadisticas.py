@@ -513,10 +513,10 @@ class Estadisticas(tk.Toplevel):
                 for child in content_frame.winfo_children():
                     if isinstance(child, tk.Frame) and hasattr(child, '_age_switch'):
                         child.destroy()
-                        print("✅ Interruptor eliminado")
+                        print("[OK] Interruptor eliminado")
                 delattr(self, 'age_switch_added')
             except Exception as e:
-                print(f"❌ Error al eliminar interruptor: {e}")
+                print(f"[ERROR] Error al eliminar interruptor: {e}")
         
         if self.current_stat == 0:
             self.load_unidad_data_simple()
@@ -542,11 +542,11 @@ class Estadisticas(tk.Toplevel):
     def load_unidad_data_simple(self):
         """Cargar datos de distribución por unidad en tabla real"""
         try:
-            print("🔄 Cargando datos de unidades...")
+            print("[REFRESH] Cargando datos de unidades...")
             
             # Verificar que la tabla existe
             if not hasattr(self, 'stats_table'):
-                print("❌ Widget stats_table no existe")
+                print("[ERROR] Widget stats_table no existe")
                 return
                 
             # Limpiar tabla actual
@@ -598,10 +598,10 @@ class Estadisticas(tk.Toplevel):
                     formatear_porcentaje(porcentaje)
                 ))
             
-            print(f"✅ Datos cargados: {total} registros procesados")
+            print(f"[OK] Datos cargados: {total} registros procesados")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos: {e}")
+            print(f"[ERROR] Error al cargar datos: {e}")
             self.show_error_in_table(f"Error al cargar datos: {str(e)}")
             
     def show_error_in_text(self, mensaje):
@@ -609,7 +609,7 @@ class Estadisticas(tk.Toplevel):
         if hasattr(self, 'unidad_text'):
             self.unidad_text.config(state='normal')
             self.unidad_text.delete(1.0, tk.END)
-            self.unidad_text.insert(tk.END, f"❌ {mensaje}")
+            self.unidad_text.insert(tk.END, f"[ERROR] {mensaje}")
             self.unidad_text.config(state='disabled')
             
     def show_error_in_table(self, mensaje):
@@ -619,12 +619,12 @@ class Estadisticas(tk.Toplevel):
             for item in self.stats_table.get_children():
                 self.stats_table.delete(item)
             # Insertar mensaje de error
-            self.stats_table.insert("", "end", values=(f"❌ {mensaje}", "", ""))
+            self.stats_table.insert("", "end", values=(f"[ERROR] {mensaje}", "", ""))
             
     def load_dedo_data_simple(self):
         """Cargar datos de distribución por dedo registrado en tabla real"""
         try:
-            print("🔄 Cargando datos de dedos...")
+            print("[REFRESH] Cargando datos de dedos...")
             
             if not hasattr(self, 'stats_table'):
                 return
@@ -675,16 +675,16 @@ class Estadisticas(tk.Toplevel):
                     formatear_porcentaje(porcentaje)
                 ))
             
-            print(f"✅ Datos de dedos cargados: {total} registros")
+            print(f"[OK] Datos de dedos cargados: {total} registros")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos de dedos: {e}")
+            print(f"[ERROR] Error al cargar datos de dedos: {e}")
             self.show_error_in_table(f"Error al cargar datos: {str(e)}")
             
     def load_edad_data_simple(self):
         """Cargar datos de distribución por edades en tabla real"""
         try:
-            print("🔄 Cargando datos de edades...")
+            print("[REFRESH] Cargando datos de edades...")
             
             if not hasattr(self, 'stats_table'):
                 return
@@ -722,9 +722,9 @@ class Estadisticas(tk.Toplevel):
                     
                     # Marcar que ya se agregó el interruptor
                     self.age_switch_added = True
-                    print("✅ Interruptor agregado en la posición marcada")
+                    print("[OK] Interruptor agregado en la posición marcada")
                 except Exception as e:
-                    print(f"❌ Error al agregar interruptor: {e}")
+                    print(f"[ERROR] Error al agregar interruptor: {e}")
             
             conn = connect_db()
             if not conn:
@@ -792,7 +792,7 @@ class Estadisticas(tk.Toplevel):
                         formatear_porcentaje(porcentaje)
                     ))
                 
-                print(f"✅ Datos de edades individuales cargados: {total} registros")
+                print(f"[OK] Datos de edades individuales cargados: {total} registros")
                 return
                 
             # Crear rangos dinámicos basados en la distribución real de datos
@@ -872,7 +872,7 @@ class Estadisticas(tk.Toplevel):
                                         break
                     except ImportError:
                         # Fallback si numpy no está disponible
-                        print("⚠️ numpy no disponible, usando rangos estándar")
+                        print("[WARN] numpy no disponible, usando rangos estándar")
                         rangos = {
                             "18-25 años": 0,
                             "26-35 años": 0, 
@@ -908,16 +908,16 @@ class Estadisticas(tk.Toplevel):
                     formatear_porcentaje(porcentaje)
                 ))
             
-            print(f"✅ Datos de edades cargados: {total} registros")
+            print(f"[OK] Datos de edades cargados: {total} registros")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos de edades: {e}")
+            print(f"[ERROR] Error al cargar datos de edades: {e}")
             self.show_error_in_table(f"Error al cargar datos: {str(e)}")
             
     def load_sexo_data_simple(self):
         """Cargar datos de distribución por sexo en tabla real"""
         try:
-            print("🔄 Cargando datos de sexo...")
+            print("[REFRESH] Cargando datos de sexo...")
             
             if not hasattr(self, 'stats_table'):
                 return
@@ -963,16 +963,16 @@ class Estadisticas(tk.Toplevel):
                     formatear_porcentaje(porcentaje)
                 ))
             
-            print(f"✅ Datos de sexo cargados: {len(sexo_data)} categorías")
+            print(f"[OK] Datos de sexo cargados: {len(sexo_data)} categorías")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos de sexo: {e}")
+            print(f"[ERROR] Error al cargar datos de sexo: {e}")
             self.show_error_in_table(f"Error al cargar datos: {str(e)}")
             
     def load_dia_semana_data_simple(self):
         """Cargar datos de distribución por día de la semana"""
         try:
-            print("🔄 Cargando datos por día de la semana...")
+            print("[REFRESH] Cargando datos por día de la semana...")
             
             if not hasattr(self, 'stats_table'):
                 return
@@ -1026,16 +1026,16 @@ class Estadisticas(tk.Toplevel):
                     formatear_porcentaje(porcentaje)
                 ))
             
-            print(f"✅ Datos por día de la semana cargados: {len(dia_data)} días")
+            print(f"[OK] Datos por día de la semana cargados: {len(dia_data)} días")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos por día de la semana: {e}")
+            print(f"[ERROR] Error al cargar datos por día de la semana: {e}")
             self.show_error_in_table(f"Error al cargar datos: {str(e)}")
             
     def load_anios_data_simple(self):
         """Cargar datos de registros por años"""
         try:
-            print("🔄 Cargando datos por años...")
+            print("[REFRESH] Cargando datos por años...")
             
             if not hasattr(self, 'stats_table'):
                 return
@@ -1081,16 +1081,16 @@ class Estadisticas(tk.Toplevel):
                     formatear_porcentaje(porcentaje)
                 ))
             
-            print(f"✅ Datos por años cargados: {len(anio_data)} años")
+            print(f"[OK] Datos por años cargados: {len(anio_data)} años")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos por años: {e}")
+            print(f"[ERROR] Error al cargar datos por años: {e}")
             self.show_error_in_table(f"Error al cargar datos: {str(e)}")
             
     def load_horarios_pico_data_simple(self):
         """Cargar datos de horarios de pico de registro (por hora)"""
         try:
-            print("🔄 Cargando datos de horarios de pico...")
+            print("[REFRESH] Cargando datos de horarios de pico...")
             
             if not hasattr(self, 'stats_table'):
                 return
@@ -1140,16 +1140,16 @@ class Estadisticas(tk.Toplevel):
                     formatear_porcentaje(porcentaje)
                 ))
             
-            print(f"✅ Datos de horarios de pico cargados: {len(hora_data)} horas")
+            print(f"[OK] Datos de horarios de pico cargados: {len(hora_data)} horas")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos de horarios de pico: {e}")
+            print(f"[ERROR] Error al cargar datos de horarios de pico: {e}")
             self.show_error_in_table(f"Error al cargar datos: {str(e)}")
             
     def load_edad_sexo_data_simple(self):
         """Cargar datos de distribución por rango de edad y sexo"""
         try:
-            print("🔄 Cargando datos por rango de edad y sexo...")
+            print("[REFRESH] Cargando datos por rango de edad y sexo...")
             
             if not hasattr(self, 'stats_table'):
                 return
@@ -1210,16 +1210,16 @@ class Estadisticas(tk.Toplevel):
                     formatear_porcentaje(porcentaje)
                 ))
             
-            print(f"✅ Datos por rango de edad y sexo cargados: {len(edad_sexo_data)} combinaciones")
+            print(f"[OK] Datos por rango de edad y sexo cargados: {len(edad_sexo_data)} combinaciones")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos por rango de edad y sexo: {e}")
+            print(f"[ERROR] Error al cargar datos por rango de edad y sexo: {e}")
             self.show_error_in_table(f"Error al cargar datos: {str(e)}")
             
     def load_edad_promedio_unidad_data_simple(self):
         """Cargar datos de edad promedio por unidad"""
         try:
-            print("🔄 Cargando datos de edad promedio por unidad...")
+            print("[REFRESH] Cargando datos de edad promedio por unidad...")
             
             if not hasattr(self, 'stats_table'):
                 return
@@ -1268,16 +1268,16 @@ class Estadisticas(tk.Toplevel):
                     f"{formatear_numero(total_personas)} personas"
                 ))
             
-            print(f"✅ Datos de edad promedio por unidad cargados: {len(edad_promedio_data)} unidades")
+            print(f"[OK] Datos de edad promedio por unidad cargados: {len(edad_promedio_data)} unidades")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos de edad promedio por unidad: {e}")
+            print(f"[ERROR] Error al cargar datos de edad promedio por unidad: {e}")
             self.show_error_in_table(f"Error al cargar datos: {str(e)}")
             
     def load_usuario_data_simple(self):
         """Cargar datos de top 5 usuarios más activos en tabla real"""
         try:
-            print("🔄 Cargando datos de usuarios...")
+            print("[REFRESH] Cargando datos de usuarios...")
             
             if not hasattr(self, 'stats_table'):
                 return
@@ -1312,7 +1312,7 @@ class Estadisticas(tk.Toplevel):
                 return
                 
             # Ranking con medallas
-            medallas = ["🥇", "🥈", "🥉", "🏅", "🎖️"]
+            medallas = ["🥇", "🥈", "🥉", "🏅", "[MEDAL]"]
             total_general = sum(total for _, total in usuarios_data)
             
             # Insertar datos en la tabla sin ranking
@@ -1325,10 +1325,10 @@ class Estadisticas(tk.Toplevel):
                     formatear_porcentaje(porcentaje)
                 ))
             
-            print(f"✅ Datos de usuarios cargados: {len(usuarios_data)} usuarios")
+            print(f"[OK] Datos de usuarios cargados: {len(usuarios_data)} usuarios")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos de usuarios: {e}")
+            print(f"[ERROR] Error al cargar datos de usuarios: {e}")
             self.show_error_in_table(f"Error al cargar datos: {str(e)}")
         
     def create_premium_card_vertical(self, parent, title, subtitle, content_creator, section_id, expanded=False):
@@ -1901,7 +1901,7 @@ class Estadisticas(tk.Toplevel):
     def load_statistics(self):
         """Cargar todas las estadísticas"""
         try:
-            print("🔄 Cargando estadísticas...")
+            print("[REFRESH] Cargando estadísticas...")
             
             # Verificar privilegios para estadísticas
             from privilegios_utils import puede_ver_estadisticas_completas, verificar_permiso
@@ -1912,7 +1912,7 @@ class Estadisticas(tk.Toplevel):
             # Cargar estadísticas detalladas solo si tiene permisos
             if puede_ver_estadisticas_completas(self.user_data) or verificar_permiso(self.user_data, 'estadisticas_basicas', mostrar_error=False):
                 self.load_detailed_stats()
-                print("✅ Estadísticas cargadas correctamente")
+                print("[OK] Estadísticas cargadas correctamente")
             else:
                 # Mostrar mensaje de acceso restringido
                 messagebox.showwarning("Acceso Restringido", 
@@ -1921,7 +1921,7 @@ class Estadisticas(tk.Toplevel):
                 self.destroy()
             
         except Exception as e:
-            print(f"❌ Error al cargar estadísticas: {e}")
+            print(f"[ERROR] Error al cargar estadísticas: {e}")
             messagebox.showerror("Error", f"Error al cargar estadísticas: {e}")
             
     def load_main_metrics(self):
@@ -1929,7 +1929,7 @@ class Estadisticas(tk.Toplevel):
         try:
             conn = connect_db()
             if not conn:
-                print("❌ No se pudo conectar a la base de datos")
+                print("[ERROR] No se pudo conectar a la base de datos")
                 return
                 
             cursor = conn.cursor()
@@ -1968,10 +1968,10 @@ class Estadisticas(tk.Toplevel):
             self.update_idletasks()
             
             conn.close()
-            print(f"✅ Métricas cargadas: {total_postulantes} postulantes, {total_usuarios} usuarios")
+            print(f"[OK] Métricas cargadas: {total_postulantes} postulantes, {total_usuarios} usuarios")
             
         except Exception as e:
-            print(f"❌ Error al cargar métricas principales: {e}")
+            print(f"[ERROR] Error al cargar métricas principales: {e}")
             
     def load_detailed_stats(self):
         """Cargar estadísticas detalladas"""
@@ -1991,7 +1991,7 @@ class Estadisticas(tk.Toplevel):
             postulantes = cursor.fetchall()
             
             if not postulantes:
-                print("ℹ️ No hay postulantes en la base de datos")
+                print("[INFO] No hay postulantes en la base de datos")
                 return
                 
             # Calcular estadísticas de edad
@@ -2037,19 +2037,19 @@ class Estadisticas(tk.Toplevel):
             self.update_idletasks()
             
             conn.close()
-            print(f"✅ Estadísticas detalladas cargadas: {len(postulantes)} registros procesados")
+            print(f"[OK] Estadísticas detalladas cargadas: {len(postulantes)} registros procesados")
             
         except Exception as e:
-            print(f"❌ Error al cargar estadísticas detalladas: {e}")
+            print(f"[ERROR] Error al cargar estadísticas detalladas: {e}")
             
     def update_unidad_distribution(self, postulantes):
         """Actualizar distribución por unidad de inscripción"""
         try:
-            print(f"🔍 Intentando actualizar unidad_text...")
+            print(f"[SEARCH] Intentando actualizar unidad_text...")
             if not hasattr(self, 'unidad_text'):
-                print("❌ Widget unidad_text no existe aún")
+                print("[ERROR] Widget unidad_text no existe aún")
                 return
-            print(f"✅ Widget unidad_text encontrado")
+            print(f"[OK] Widget unidad_text encontrado")
                 
             # Contar unidades
             unidad_count = {}
@@ -2077,10 +2077,10 @@ class Estadisticas(tk.Toplevel):
             
             # Forzar actualización visual
             self.unidad_text.update_idletasks()
-            print("✅ Distribución por unidad cargada")
+            print("[OK] Distribución por unidad cargada")
                 
         except Exception as e:
-            print(f"❌ Error al actualizar distribución de unidades: {e}")
+            print(f"[ERROR] Error al actualizar distribución de unidades: {e}")
             
     def update_dedos_distribution(self, postulantes):
         """Actualizar distribución por dedos registrados"""
@@ -2115,10 +2115,10 @@ class Estadisticas(tk.Toplevel):
             
             # Forzar actualización visual
             self.dedos_text.update_idletasks()
-            print("✅ Distribución por dedo cargada")
+            print("[OK] Distribución por dedo cargada")
                 
         except Exception as e:
-            print(f"❌ Error al actualizar distribución de dedos: {e}")
+            print(f"[ERROR] Error al actualizar distribución de dedos: {e}")
             
     def update_age_distribution(self, edades):
         """Actualizar distribución por edad"""
@@ -2175,7 +2175,7 @@ class Estadisticas(tk.Toplevel):
                         
                     except ImportError:
                         # Fallback si numpy no está disponible
-                        print("⚠️ numpy no disponible, usando rangos estándar")
+                        print("[WARN] numpy no disponible, usando rangos estándar")
                         rangos = {
                             "18-25": 0,
                             "26-35": 0,
@@ -2255,10 +2255,10 @@ class Estadisticas(tk.Toplevel):
             
             # Forzar actualización visual
             self.age_distribution_text.update_idletasks()
-            print("✅ Distribución por edad cargada")
+            print("[OK] Distribución por edad cargada")
             
         except Exception as e:
-            print(f"❌ Error al actualizar distribución de edad: {e}")
+            print(f"[ERROR] Error al actualizar distribución de edad: {e}")
             
     def update_usuario_distribution(self):
         """Actualizar distribución por registros de usuario"""
@@ -2311,12 +2311,12 @@ class Estadisticas(tk.Toplevel):
             
             # Forzar actualización visual
             self.usuario_text.update_idletasks()
-            print("✅ Distribución por usuario cargada")
+            print("[OK] Distribución por usuario cargada")
                 
             conn.close()
             
         except Exception as e:
-            print(f"❌ Error al actualizar distribución de usuarios: {e}")
+            print(f"[ERROR] Error al actualizar distribución de usuarios: {e}")
             if hasattr(self, 'usuario_text'):
                 self.usuario_text.config(state='normal')
                 self.usuario_text.delete(1.0, tk.END)

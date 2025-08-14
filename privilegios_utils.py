@@ -94,8 +94,8 @@ def puede_editar_postulante(user_data, postulante_data):
         f"No puede editar este postulante.\n\n"
         f"Su rol: {rol}\n"
         f"Permisos disponibles:\n"
-        f"• editar_postulantes_propios: {'✅' if verificar_privilegio(rol, 'editar_postulantes_propios') else '❌'}\n"
-        f"• editar_postulantes_otros: {'✅' if verificar_privilegio(rol, 'editar_postulantes_otros') else '❌'}\n\n"
+        f"• editar_postulantes_propios: {'[OK]' if verificar_privilegio(rol, 'editar_postulantes_propios') else '[ERROR]'}\n"
+        f"• editar_postulantes_otros: {'[OK]' if verificar_privilegio(rol, 'editar_postulantes_otros') else '[ERROR]'}\n\n"
         "Solo puede editar sus propios postulantes o contacte al administrador."
     )
     return False
@@ -149,9 +149,9 @@ def puede_eliminar_postulante(user_data, postulante_data):
         f"No puede eliminar este postulante específico.\n\n"
         f"Su rol: {rol}\n"
         f"Permisos disponibles:\n"
-        f"• eliminar_postulantes: {'✅' if verificar_privilegio(rol, 'eliminar_postulantes') else '❌'}\n"
-        f"• eliminar_postulantes_propios: {'✅' if verificar_privilegio(rol, 'eliminar_postulantes_propios') else '❌'}\n"
-        f"• eliminar_postulantes_otros: {'✅' if verificar_privilegio(rol, 'eliminar_postulantes_otros') else '❌'}\n\n"
+        f"• eliminar_postulantes: {'[OK]' if verificar_privilegio(rol, 'eliminar_postulantes') else '[ERROR]'}\n"
+        f"• eliminar_postulantes_propios: {'[OK]' if verificar_privilegio(rol, 'eliminar_postulantes_propios') else '[ERROR]'}\n"
+        f"• eliminar_postulantes_otros: {'[OK]' if verificar_privilegio(rol, 'eliminar_postulantes_otros') else '[ERROR]'}\n\n"
         "Solo puede eliminar sus propios postulantes o contacte al administrador."
     )
     return False

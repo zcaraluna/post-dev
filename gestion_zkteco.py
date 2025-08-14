@@ -27,7 +27,7 @@ class GestionZKTeco(tk.Toplevel):
         # Lista de ventanas que deben ser notificadas cuando cambie el modo prueba
         self.test_mode_listeners = []
         
-        self.title("📱 Gestión ZKTeco K40 - Sistema QUIRA")
+        self.title("[ZKT] Gestión ZKTeco K40 - Sistema QUIRA")
         self.geometry("900x700")
         self.resizable(True, True)
         self.transient(parent)
@@ -82,7 +82,7 @@ class GestionZKTeco(tk.Toplevel):
         title_frame = ttk.Frame(header_frame)
         title_frame.pack(side='left')
         
-        title_label = ttk.Label(title_frame, text="📱 Gestión ZKTeco K40", style='Title.TLabel')
+        title_label = ttk.Label(title_frame, text="[ZKT] Gestión ZKTeco K40", style='Title.TLabel')
         title_label.pack()
         
         subtitle_label = ttk.Label(title_frame, text="Sistema de Control Biométrico", style='Status.TLabel')
@@ -92,7 +92,7 @@ class GestionZKTeco(tk.Toplevel):
         status_frame = ttk.Frame(header_frame)
         status_frame.pack(side='right', padx=(20, 0))
         
-        self.connection_status = ttk.Label(status_frame, text="❌ Desconectado", 
+        self.connection_status = ttk.Label(status_frame, text="[ERROR] Desconectado", 
                                          font=('Segoe UI', 12, 'bold'), foreground='#e74c3c')
         self.connection_status.pack()
         
@@ -141,7 +141,7 @@ class GestionZKTeco(tk.Toplevel):
                                        state='disabled')
         self.disconnect_btn.pack(side='left', padx=(0, 10))
         
-        self.refresh_btn = ttk.Button(button_frame, text="🔄 Actualizar", command=self.update_device_info)
+        self.refresh_btn = ttk.Button(button_frame, text="[REFRESH] Actualizar", command=self.update_device_info)
         self.refresh_btn.pack(side='left')
         
         # Información de estado detallada
@@ -158,7 +158,7 @@ class GestionZKTeco(tk.Toplevel):
     def create_device_info_tab(self):
         """Crear pestaña de información del dispositivo"""
         device_frame = ttk.Frame(self.notebook)
-        self.notebook.add(device_frame, text="📱 Dispositivo")
+        self.notebook.add(device_frame, text="[ZKT] Dispositivo")
         
         # Frame principal con padding
         main_frame = ttk.Frame(device_frame, padding=20)
@@ -209,7 +209,7 @@ class GestionZKTeco(tk.Toplevel):
     def create_operations_tab(self):
         """Crear pestaña de operaciones"""
         operations_frame = ttk.Frame(self.notebook)
-        self.notebook.add(operations_frame, text="⚙️ Operaciones")
+        self.notebook.add(operations_frame, text="[CONFIG] Operaciones")
         
         # Frame principal con padding
         main_frame = ttk.Frame(operations_frame, padding=20)
@@ -220,10 +220,10 @@ class GestionZKTeco(tk.Toplevel):
         main_ops_frame.pack(fill='x', pady=(0, 20))
         
         main_buttons = [
-            ("👥 Gestionar Usuarios", self.manage_users),
-            ("📊 Descargar Asistencias", self.download_attendance),
-            ("🔄 Sincronizar Hora", self.sync_time),
-            ("🗑️ Limpiar Datos", self.clear_data)
+            ("[USERS] Gestionar Usuarios", self.manage_users),
+            ("[STATUS] Descargar Asistencias", self.download_attendance),
+            ("[REFRESH] Sincronizar Hora", self.sync_time),
+            ("[DELETE] Limpiar Datos", self.clear_data)
         ]
         
         main_grid = ttk.Frame(main_ops_frame)
@@ -241,10 +241,10 @@ class GestionZKTeco(tk.Toplevel):
         advanced_frame.pack(fill='x')
         
         advanced_buttons = [
-            ("📱 Reiniciar Dispositivo", self.restart_device),
-            ("⚙️ Configuración", self.device_config),
-            ("📋 Ver Logs", self.view_logs),
-            ("💾 Backup", self.backup_device)
+            ("[ZKT] Reiniciar Dispositivo", self.restart_device),
+            ("[CONFIG] Configuración", self.device_config),
+            ("[CLIPBOARD] Ver Logs", self.view_logs),
+            ("[SAVE] Backup", self.backup_device)
         ]
         
         advanced_grid = ttk.Frame(advanced_frame)
@@ -260,14 +260,14 @@ class GestionZKTeco(tk.Toplevel):
     def create_config_tab(self):
         """Crear pestaña de configuración del sistema"""
         config_frame = ttk.Frame(self.notebook)
-        self.notebook.add(config_frame, text="🔧 Configuración")
+        self.notebook.add(config_frame, text="[BUILD] Configuración")
         
         # Frame principal con padding
         main_frame = ttk.Frame(config_frame, padding=20)
         main_frame.pack(expand=True, fill='both')
         
         # Sección de Modo Prueba
-        test_mode_frame = ttk.LabelFrame(main_frame, text="🔧 Modo Prueba", padding=15)
+        test_mode_frame = ttk.LabelFrame(main_frame, text="[BUILD] Modo Prueba", padding=15)
         test_mode_frame.pack(fill='x', pady=(0, 20))
         
         # Descripción del modo prueba
@@ -291,11 +291,11 @@ class GestionZKTeco(tk.Toplevel):
         buttons_frame = ttk.Frame(test_mode_frame)
         buttons_frame.pack(fill='x')
         
-        self.activate_test_btn = ttk.Button(buttons_frame, text="✅ Activar Modo Prueba", 
+        self.activate_test_btn = ttk.Button(buttons_frame, text="[OK] Activar Modo Prueba", 
                                            command=self.activate_test_mode, width=20)
         self.activate_test_btn.pack(side='left', padx=(0, 10))
         
-        self.deactivate_test_btn = ttk.Button(buttons_frame, text="❌ Desactivar Modo Prueba", 
+        self.deactivate_test_btn = ttk.Button(buttons_frame, text="[ERROR] Desactivar Modo Prueba", 
                                              command=self.deactivate_test_mode, width=20)
         self.deactivate_test_btn.pack(side='left')
         
@@ -324,7 +324,7 @@ class GestionZKTeco(tk.Toplevel):
     def create_logs_tab(self):
         """Crear pestaña de logs del sistema"""
         logs_frame = ttk.Frame(self.notebook)
-        self.notebook.add(logs_frame, text="📋 Logs")
+        self.notebook.add(logs_frame, text="[CLIPBOARD] Logs")
         
         # Frame principal con padding
         main_frame = ttk.Frame(logs_frame, padding=20)
@@ -352,7 +352,7 @@ class GestionZKTeco(tk.Toplevel):
         logs_buttons_frame = ttk.Frame(main_frame)
         logs_buttons_frame.pack(fill='x', pady=(10, 0))
         
-        clear_logs_btn = ttk.Button(logs_buttons_frame, text="🗑️ Limpiar Logs", 
+        clear_logs_btn = ttk.Button(logs_buttons_frame, text="[DELETE] Limpiar Logs", 
                                    command=lambda: self.log_text.delete(1.0, tk.END))
         clear_logs_btn.pack(side='left', padx=(0, 10))
         
@@ -591,7 +591,7 @@ class GestionZKTeco(tk.Toplevel):
             return
             
         # Actualizar estado
-        self.connection_status.config(text="🔄 Conectando...", foreground='#f39c12')
+        self.connection_status.config(text="[REFRESH] Conectando...", foreground='#f39c12')
         self.update_status_info(f"Conectando a {ip}:{port}...")
         
         def connect_thread():
@@ -600,7 +600,7 @@ class GestionZKTeco(tk.Toplevel):
                 
                 if self.zkteco_device.connect():
                     self.connected = True
-                    self.after(0, lambda: self.connection_status.config(text="✅ Conectado", foreground='#27ae60'))
+                    self.after(0, lambda: self.connection_status.config(text="[OK] Conectado", foreground='#27ae60'))
                     self.after(0, lambda: self.connection_time.config(text=f"Conectado desde {datetime.now().strftime('%H:%M:%S')}"))
                     self.after(0, lambda: self.update_status_info(f"Conectado exitosamente a {ip}:{port}"))
                     self.after(0, lambda: self.connect_btn.config(state='disabled'))
@@ -608,12 +608,12 @@ class GestionZKTeco(tk.Toplevel):
                     self.after(0, self.update_device_info)
                     self.after(0, lambda: self.log(f"Conectado exitosamente a {ip}:{port}"))
                 else:
-                    self.after(0, lambda: self.connection_status.config(text="❌ Error de conexión", foreground='#e74c3c'))
+                    self.after(0, lambda: self.connection_status.config(text="[ERROR] Error de conexión", foreground='#e74c3c'))
                     self.after(0, lambda: self.update_status_info(f"Error: No se pudo conectar a {ip}:{port}"))
                     self.after(0, lambda: self.log(f"Error de conexión a {ip}:{port}"))
                     
             except Exception as e:
-                self.after(0, lambda: self.connection_status.config(text="❌ Error", foreground='#e74c3c'))
+                self.after(0, lambda: self.connection_status.config(text="[ERROR] Error", foreground='#e74c3c'))
                 self.after(0, lambda: self.update_status_info(f"Error: {str(e)}"))
                 self.after(0, lambda: self.log(f"Error de conexión: {e}"))
                 
@@ -630,7 +630,7 @@ class GestionZKTeco(tk.Toplevel):
                 self.zkteco_device = None
                 
         self.connected = False
-        self.connection_status.config(text="❌ Desconectado", foreground='#e74c3c')
+        self.connection_status.config(text="[ERROR] Desconectado", foreground='#e74c3c')
         self.connection_time.config(text="")
         self.update_status_info("Dispositivo desconectado")
         self.connect_btn.config(state='normal')
@@ -696,7 +696,7 @@ class GestionZKTeco(tk.Toplevel):
         
         # Crear ventana de gestión de usuarios
         user_window = tk.Toplevel(self)
-        user_window.title("👥 Gestión de Usuarios - ZKTeco K40")
+        user_window.title("[USERS] Gestión de Usuarios - ZKTeco K40")
         user_window.geometry("800x600")
         user_window.resizable(True, True)
         user_window.transient(self)
@@ -711,7 +711,7 @@ class GestionZKTeco(tk.Toplevel):
         main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Título
-        title_label = ttk.Label(main_frame, text="👥 Gestión de Usuarios del Dispositivo", 
+        title_label = ttk.Label(main_frame, text="[USERS] Gestión de Usuarios del Dispositivo", 
                                font=('Segoe UI', 14, 'bold'))
         title_label.pack(pady=(0, 10))
         
@@ -720,13 +720,13 @@ class GestionZKTeco(tk.Toplevel):
         button_frame.pack(fill=tk.X, pady=(0, 10))
         
         # Botones
-        ttk.Button(button_frame, text="🔄 Actualizar", 
+        ttk.Button(button_frame, text="[REFRESH] Actualizar", 
                   command=lambda: load_users()).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(button_frame, text="➕ Agregar Usuario", 
+        ttk.Button(button_frame, text="[ADD] Agregar Usuario", 
                   command=lambda: add_user()).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(button_frame, text="✏️ Editar", 
                   command=lambda: edit_user()).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(button_frame, text="🗑️ Eliminar", 
+        ttk.Button(button_frame, text="[DELETE] Eliminar", 
                   command=lambda: delete_user()).pack(side=tk.LEFT, padx=(0, 5))
         
         # Treeview para usuarios
@@ -792,7 +792,7 @@ class GestionZKTeco(tk.Toplevel):
                         tree.insert('', tk.END, values=(uid, name, privilege_text, user_id, group_id))
                         users_data.append(user)
                     
-                    self.log(f"✅ {len(users)} usuarios cargados")
+                    self.log(f"[OK] {len(users)} usuarios cargados")
                     info_label.config(text=f"Total de usuarios: {len(users)}")
                 else:
                     self.log("No se encontraron usuarios")
@@ -801,12 +801,12 @@ class GestionZKTeco(tk.Toplevel):
             except Exception as e:
                 error_msg = f"Error al cargar usuarios: {e}"
                 messagebox.showerror("Error", error_msg)
-                self.log(f"❌ {error_msg}")
+                self.log(f"[ERROR] {error_msg}")
         
         def add_user():
             """Agregar nuevo usuario"""
             add_window = tk.Toplevel(user_window)
-            add_window.title("➕ Agregar Usuario")
+            add_window.title("[ADD] Agregar Usuario")
             add_window.geometry("400x300")
             add_window.transient(user_window)
             add_window.grab_set()
@@ -880,21 +880,21 @@ class GestionZKTeco(tk.Toplevel):
                 
                 if success:
                     messagebox.showinfo("Éxito", f"Usuario {name} agregado correctamente")
-                    self.log(f"✅ Usuario {name} (UID: {uid}) agregado al dispositivo")
+                    self.log(f"[OK] Usuario {name} (UID: {uid}) agregado al dispositivo")
                     add_window.destroy()
                     load_users()  # Recargar lista
                 else:
                     messagebox.showerror("Error", "No se pudo agregar el usuario")
-                    self.log(f"❌ Error al agregar usuario {name}")
+                    self.log(f"[ERROR] Error al agregar usuario {name}")
                     
             except ValueError:
                 messagebox.showerror("Error", "El UID debe ser un número")
             except Exception as e:
                 messagebox.showerror("Error", f"Error al agregar usuario: {e}")
-                self.log(f"❌ Error al agregar usuario: {e}")
+                self.log(f"[ERROR] Error al agregar usuario: {e}")
         
-        ttk.Button(button_frame, text="💾 Guardar", command=save_user).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(button_frame, text="❌ Cancelar", command=add_window.destroy).pack(side=tk.LEFT)
+        ttk.Button(button_frame, text="[SAVE] Guardar", command=save_user).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(button_frame, text="[ERROR] Cancelar", command=add_window.destroy).pack(side=tk.LEFT)
         
         def edit_user():
             """Editar usuario seleccionado"""
@@ -990,19 +990,19 @@ class GestionZKTeco(tk.Toplevel):
                     
                     if success:
                         messagebox.showinfo("Éxito", f"Usuario {name} actualizado correctamente")
-                        self.log(f"✅ Usuario {name} (UID: {uid}) actualizado en el dispositivo")
+                        self.log(f"[OK] Usuario {name} (UID: {uid}) actualizado en el dispositivo")
                         edit_window.destroy()
                         load_users()  # Recargar lista
                     else:
                         messagebox.showerror("Error", "No se pudo actualizar el usuario")
-                        self.log(f"❌ Error al actualizar usuario {name}")
+                        self.log(f"[ERROR] Error al actualizar usuario {name}")
                         
                 except Exception as e:
                     messagebox.showerror("Error", f"Error al actualizar usuario: {e}")
-                    self.log(f"❌ Error al actualizar usuario: {e}")
+                    self.log(f"[ERROR] Error al actualizar usuario: {e}")
             
-            ttk.Button(button_frame, text="💾 Guardar", command=update_user).pack(side=tk.LEFT, padx=(0, 5))
-            ttk.Button(button_frame, text="❌ Cancelar", command=edit_window.destroy).pack(side=tk.LEFT)
+            ttk.Button(button_frame, text="[SAVE] Guardar", command=update_user).pack(side=tk.LEFT, padx=(0, 5))
+            ttk.Button(button_frame, text="[ERROR] Cancelar", command=edit_window.destroy).pack(side=tk.LEFT)
         
         def delete_user():
             """Eliminar usuario seleccionado"""
@@ -1032,15 +1032,15 @@ class GestionZKTeco(tk.Toplevel):
                     
                     if success:
                         messagebox.showinfo("Éxito", f"Usuario {name} eliminado correctamente")
-                        self.log(f"✅ Usuario {name} (UID: {uid}) eliminado del dispositivo")
+                        self.log(f"[OK] Usuario {name} (UID: {uid}) eliminado del dispositivo")
                         load_users()  # Recargar lista
                     else:
                         messagebox.showerror("Error", "No se pudo eliminar el usuario")
-                        self.log(f"❌ Error al eliminar usuario {name}")
+                        self.log(f"[ERROR] Error al eliminar usuario {name}")
                         
                 except Exception as e:
                     messagebox.showerror("Error", f"Error al eliminar usuario: {e}")
-                    self.log(f"❌ Error al eliminar usuario: {e}")
+                    self.log(f"[ERROR] Error al eliminar usuario: {e}")
         
         # Evento de selección
         def on_select(event):
@@ -1182,33 +1182,33 @@ class GestionZKTeco(tk.Toplevel):
                 self.log("Limpiando registros de asistencia...")
                 attendance_success = self.zkteco_device.clear_attendance()
                 if attendance_success:
-                    self.log("✅ Registros de asistencia limpiados exitosamente")
+                    self.log("[OK] Registros de asistencia limpiados exitosamente")
                 else:
-                    self.log("❌ Error al limpiar registros de asistencia")
+                    self.log("[ERROR] Error al limpiar registros de asistencia")
                 
                 # Limpiar usuarios
                 self.log("Limpiando usuarios...")
                 users_success = self.zkteco_device.clear_users()
                 if users_success:
-                    self.log("✅ Usuarios limpiados exitosamente")
+                    self.log("[OK] Usuarios limpiados exitosamente")
                 else:
-                    self.log("❌ Error al limpiar usuarios")
+                    self.log("[ERROR] Error al limpiar usuarios")
                 
                 # Mostrar resultado final
                 if attendance_success and users_success:
                     messagebox.showinfo("Éxito", "Datos del dispositivo limpiados exitosamente")
-                    self.log("🎉 Datos del dispositivo limpiados exitosamente")
+                    self.log("[SUCCESS] Datos del dispositivo limpiados exitosamente")
                 elif attendance_success or users_success:
                     partial_msg = "Datos parcialmente limpiados:\n"
                     if attendance_success:
-                        partial_msg += "✅ Registros de asistencia\n"
+                        partial_msg += "[OK] Registros de asistencia\n"
                     if users_success:
-                        partial_msg += "✅ Usuarios\n"
+                        partial_msg += "[OK] Usuarios\n"
                     messagebox.showwarning("Limpieza Parcial", partial_msg)
-                    self.log("⚠️ Limpieza parcial completada")
+                    self.log("[WARN] Limpieza parcial completada")
                 else:
                     messagebox.showerror("Error", "No se pudieron limpiar los datos del dispositivo")
-                    self.log("❌ No se pudieron limpiar los datos")
+                    self.log("[ERROR] No se pudieron limpiar los datos")
                 
                 # Actualizar información del dispositivo
                 self.update_device_info()
@@ -1216,7 +1216,7 @@ class GestionZKTeco(tk.Toplevel):
             except Exception as e:
                 error_msg = f"No se pudieron limpiar los datos: {e}"
                 messagebox.showerror("Error", error_msg)
-                self.log(f"❌ Error al limpiar datos: {e}")
+                self.log(f"[ERROR] Error al limpiar datos: {e}")
                 logger.error(f"Error en clear_data: {e}")
             
     def restart_device(self):
@@ -1261,7 +1261,7 @@ class GestionZKTeco(tk.Toplevel):
         
         # Crear ventana de configuración
         config_window = tk.Toplevel(self)
-        config_window.title("⚙️ Configuración del Dispositivo - ZKTeco K40")
+        config_window.title("[CONFIG] Configuración del Dispositivo - ZKTeco K40")
         config_window.geometry("600x500")
         config_window.resizable(True, True)
         config_window.transient(self)
@@ -1272,7 +1272,7 @@ class GestionZKTeco(tk.Toplevel):
         main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Título
-        title_label = ttk.Label(main_frame, text="⚙️ Configuración del Dispositivo", 
+        title_label = ttk.Label(main_frame, text="[CONFIG] Configuración del Dispositivo", 
                                font=('Segoe UI', 14, 'bold'))
         title_label.pack(pady=(0, 20))
         
@@ -1424,10 +1424,10 @@ class GestionZKTeco(tk.Toplevel):
                     ip_var.set(device_info.get('ip', ''))
                     port_var.set(str(device_info.get('port', '4370')))
                 
-                self.log("✅ Configuración actual cargada")
+                self.log("[OK] Configuración actual cargada")
                 
             except Exception as e:
-                self.log(f"❌ Error al cargar configuración: {e}")
+                self.log(f"[ERROR] Error al cargar configuración: {e}")
                 messagebox.showerror("Error", f"No se pudo cargar la configuración actual: {e}")
         
         def save_config():
@@ -1439,12 +1439,12 @@ class GestionZKTeco(tk.Toplevel):
                 # Por ahora solo mostraremos un mensaje de éxito
                 
                 messagebox.showinfo("Éxito", "Configuración guardada correctamente")
-                self.log("✅ Configuración guardada en el dispositivo")
+                self.log("[OK] Configuración guardada en el dispositivo")
                 
             except Exception as e:
                 error_msg = f"Error al guardar configuración: {e}"
                 messagebox.showerror("Error", error_msg)
-                self.log(f"❌ {error_msg}")
+                self.log(f"[ERROR] {error_msg}")
         
         def reset_config():
             """Restablecer configuración por defecto"""
@@ -1484,18 +1484,18 @@ class GestionZKTeco(tk.Toplevel):
                     work_days_var.set("Lunes-Viernes")
                     
                     messagebox.showinfo("Éxito", "Configuración restablecida por defecto")
-                    self.log("✅ Configuración restablecida por defecto")
+                    self.log("[OK] Configuración restablecida por defecto")
                     
                 except Exception as e:
                     error_msg = f"Error al restablecer configuración: {e}"
                     messagebox.showerror("Error", error_msg)
-                    self.log(f"❌ {error_msg}")
+                    self.log(f"[ERROR] {error_msg}")
         
         # Botones
         ttk.Button(button_frame, text="📥 Cargar Actual", command=load_current_config).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(button_frame, text="💾 Guardar", command=save_config).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(button_frame, text="🔄 Restablecer", command=reset_config).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(button_frame, text="❌ Cerrar", command=config_window.destroy).pack(side=tk.RIGHT)
+        ttk.Button(button_frame, text="[SAVE] Guardar", command=save_config).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(button_frame, text="[REFRESH] Restablecer", command=reset_config).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(button_frame, text="[ERROR] Cerrar", command=config_window.destroy).pack(side=tk.RIGHT)
         
         # Cargar configuración actual al abrir
         load_current_config()
@@ -1508,7 +1508,7 @@ class GestionZKTeco(tk.Toplevel):
         
         # Crear ventana de logs
         logs_window = tk.Toplevel(self)
-        logs_window.title("📋 Logs del Dispositivo - ZKTeco K40")
+        logs_window.title("[CLIPBOARD] Logs del Dispositivo - ZKTeco K40")
         logs_window.geometry("900x700")
         logs_window.resizable(True, True)
         logs_window.transient(self)
@@ -1519,7 +1519,7 @@ class GestionZKTeco(tk.Toplevel):
         main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Título
-        title_label = ttk.Label(main_frame, text="📋 Logs del Sistema del Dispositivo", 
+        title_label = ttk.Label(main_frame, text="[CLIPBOARD] Logs del Sistema del Dispositivo", 
                                font=('Segoe UI', 14, 'bold'))
         title_label.pack(pady=(0, 10))
         
@@ -1556,13 +1556,13 @@ class GestionZKTeco(tk.Toplevel):
         button_frame.pack(fill=tk.X, pady=(0, 10))
         
         # Botones
-        ttk.Button(button_frame, text="🔄 Actualizar", 
+        ttk.Button(button_frame, text="[REFRESH] Actualizar", 
                   command=lambda: load_logs()).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(button_frame, text="🔍 Filtrar", 
+        ttk.Button(button_frame, text="[SEARCH] Filtrar", 
                   command=lambda: filter_logs()).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(button_frame, text="🧹 Limpiar Filtros", 
                   command=lambda: clear_filters()).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(button_frame, text="💾 Exportar", 
+        ttk.Button(button_frame, text="[SAVE] Exportar", 
                   command=lambda: export_logs()).pack(side=tk.LEFT, padx=(0, 5))
         
         # Treeview para logs
@@ -1674,13 +1674,13 @@ class GestionZKTeco(tk.Toplevel):
                         log['details']
                     ))
                 
-                self.log(f"✅ {len(sample_logs)} logs cargados")
+                self.log(f"[OK] {len(sample_logs)} logs cargados")
                 info_label.config(text=f"Total de logs: {len(sample_logs)}")
                 
             except Exception as e:
                 error_msg = f"Error al cargar logs: {e}"
                 messagebox.showerror("Error", error_msg)
-                self.log(f"❌ {error_msg}")
+                self.log(f"[ERROR] {error_msg}")
         
         def filter_logs():
             """Filtrar logs según criterios"""
@@ -1738,12 +1738,12 @@ class GestionZKTeco(tk.Toplevel):
                     ))
                 
                 info_label.config(text=f"Logs filtrados: {len(filtered_logs)} de {len(logs_data)}")
-                self.log(f"✅ Filtro aplicado: {len(filtered_logs)} logs mostrados")
+                self.log(f"[OK] Filtro aplicado: {len(filtered_logs)} logs mostrados")
                 
             except Exception as e:
                 error_msg = f"Error al filtrar logs: {e}"
                 messagebox.showerror("Error", error_msg)
-                self.log(f"❌ {error_msg}")
+                self.log(f"[ERROR] {error_msg}")
         
         def clear_filters():
             """Limpiar filtros"""
@@ -1779,12 +1779,12 @@ class GestionZKTeco(tk.Toplevel):
                             writer.writerow(log)
                     
                     messagebox.showinfo("Éxito", f"Se exportaron {len(filtered_logs)} logs a {filename}")
-                    self.log(f"✅ {len(filtered_logs)} logs exportados a {filename}")
+                    self.log(f"[OK] {len(filtered_logs)} logs exportados a {filename}")
                     
             except Exception as e:
                 error_msg = f"Error al exportar logs: {e}"
                 messagebox.showerror("Error", error_msg)
-                self.log(f"❌ {error_msg}")
+                self.log(f"[ERROR] {error_msg}")
         
         # Evento de selección
         def on_select(event):
@@ -1848,36 +1848,36 @@ class GestionZKTeco(tk.Toplevel):
                 try:
                     device_info = self.zkteco_device.get_device_info()
                     backup_data['device_info'] = device_info
-                    self.log("✅ Información del dispositivo obtenida")
+                    self.log("[OK] Información del dispositivo obtenida")
                 except Exception as e:
-                    self.log(f"❌ Error al obtener información del dispositivo: {e}")
+                    self.log(f"[ERROR] Error al obtener información del dispositivo: {e}")
                 
                 # 2. Lista de usuarios
                 self.log("Obteniendo lista de usuarios...")
                 try:
                     users = self.zkteco_device.get_user_list()
                     backup_data['users'] = users if users else []
-                    self.log(f"✅ {len(backup_data['users'])} usuarios obtenidos")
+                    self.log(f"[OK] {len(backup_data['users'])} usuarios obtenidos")
                 except Exception as e:
-                    self.log(f"❌ Error al obtener usuarios: {e}")
+                    self.log(f"[ERROR] Error al obtener usuarios: {e}")
                 
                 # 3. Registros de asistencia
                 self.log("Obteniendo registros de asistencia...")
                 try:
                     logs = self.zkteco_device.get_attendance_logs()
                     backup_data['attendance_logs'] = logs if logs else []
-                    self.log(f"✅ {len(backup_data['attendance_logs'])} registros de asistencia obtenidos")
+                    self.log(f"[OK] {len(backup_data['attendance_logs'])} registros de asistencia obtenidos")
                 except Exception as e:
-                    self.log(f"❌ Error al obtener registros de asistencia: {e}")
+                    self.log(f"[ERROR] Error al obtener registros de asistencia: {e}")
                 
                 # 4. Hora del dispositivo
                 try:
                     device_time = self.zkteco_device.get_device_time()
                     if device_time:
                         backup_data['device_time'] = device_time.isoformat()
-                        self.log("✅ Hora del dispositivo obtenida")
+                        self.log("[OK] Hora del dispositivo obtenida")
                 except Exception as e:
-                    self.log(f"❌ Error al obtener hora del dispositivo: {e}")
+                    self.log(f"[ERROR] Error al obtener hora del dispositivo: {e}")
                 
                 # Guardar datos principales
                 main_data_file = os.path.join(temp_dir, 'backup_data.json')
@@ -1950,12 +1950,12 @@ class GestionZKTeco(tk.Toplevel):
                 summary_msg += f"• Resumen detallado"
                 
                 messagebox.showinfo("Backup Completado", summary_msg)
-                self.log(f"🎉 Backup completado: {os.path.basename(filename)} ({total_size:.2f} MB)")
+                self.log(f"[SUCCESS] Backup completado: {os.path.basename(filename)} ({total_size:.2f} MB)")
                 
         except Exception as e:
             error_msg = f"Error al crear backup: {e}"
             messagebox.showerror("Error", error_msg)
-            self.log(f"❌ {error_msg}")
+            self.log(f"[ERROR] {error_msg}")
             logger.error(f"Error en backup_device: {e}")
     
     def on_closing(self):

@@ -45,16 +45,16 @@ def create_database(db_name, user, password, host="localhost", port="5432"):
         if not exists:
             # Crear la base de datos
             cursor.execute(f"CREATE DATABASE {db_name}")
-            print(f"✅ Base de datos '{db_name}' creada exitosamente")
+            print(f"[OK] Base de datos '{db_name}' creada exitosamente")
         else:
-            print(f"✅ Base de datos '{db_name}' ya existe")
+            print(f"[OK] Base de datos '{db_name}' ya existe")
         
         cursor.close()
         conn.close()
         return True
         
     except Exception as e:
-        print(f"❌ Error al crear base de datos: {e}")
+        print(f"[ERROR] Error al crear base de datos: {e}")
         return False
 
 class DatabaseSetupWindow:
@@ -108,11 +108,11 @@ class DatabaseSetupWindow:
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(pady=20)
         
-        ttk.Button(button_frame, text="🔍 Probar Conexión", 
+        ttk.Button(button_frame, text="[SEARCH] Probar Conexión", 
                   command=self.test_connection).pack(side='left', padx=(0, 10))
-        ttk.Button(button_frame, text="🗄️ Crear Base de Datos", 
+        ttk.Button(button_frame, text="[DB] Crear Base de Datos", 
                   command=self.create_database).pack(side='left', padx=(0, 10))
-        ttk.Button(button_frame, text="✅ Inicializar Sistema", 
+        ttk.Button(button_frame, text="[OK] Inicializar Sistema", 
                   command=self.initialize_system).pack(side='left')
         
         # Área de log
@@ -128,18 +128,18 @@ class DatabaseSetupWindow:
         
     def check_postgresql(self):
         """Verificar instalación de PostgreSQL"""
-        self.log("🔍 Verificando PostgreSQL...")
+        self.log("[SEARCH] Verificando PostgreSQL...")
         installed, version = check_postgresql_installed()
         
         if installed:
-            self.log(f"✅ PostgreSQL instalado: {version}")
+            self.log(f"[OK] PostgreSQL instalado: {version}")
         else:
-            self.log(f"❌ PostgreSQL no encontrado: {version}")
-            self.log("💡 Instale PostgreSQL desde: https://www.postgresql.org/download/")
+            self.log(f"[ERROR] PostgreSQL no encontrado: {version}")
+            self.log("[TIP] Instale PostgreSQL desde: https://www.postgresql.org/download/")
     
     def test_connection(self):
         """Probar conexión a PostgreSQL"""
-        self.log("🔍 Probando conexión...")
+        self.log("[SEARCH] Probando conexión...")
         
         try:
             conn = psycopg2.connect(
@@ -150,10 +150,10 @@ class DatabaseSetupWindow:
                 dbname="postgres"  # Conectar a postgres por defecto
             )
             conn.close()
-            self.log("✅ Conexión exitosa a PostgreSQL")
+            self.log("[OK] Conexión exitosa a PostgreSQL")
             return True
         except Exception as e:
-            self.log(f"❌ Error de conexión: {e}")
+            self.log(f"[ERROR] Error de conexión: {e}")
             return False
     
     def create_database(self):
@@ -161,7 +161,7 @@ class DatabaseSetupWindow:
         if not self.test_connection():
             return
         
-        self.log(f"🗄️ Creando base de datos '{self.db_name_var.get()}'...")
+        self.log(f"[DB] Creando base de datos '{self.db_name_var.get()}'...")
         
         if create_database(
             self.db_name_var.get(),
@@ -170,13 +170,13 @@ class DatabaseSetupWindow:
             self.host_var.get(),
             self.port_var.get()
         ):
-            self.log("✅ Base de datos creada exitosamente")
+            self.log("[OK] Base de datos creada exitosamente")
         else:
-            self.log("❌ Error al crear base de datos")
+            self.log("[ERROR] Error al crear base de datos")
     
     def initialize_system(self):
         """Inicializar el sistema completo"""
-        self.log("🚀 Inicializando sistema...")
+        self.log("[INIT] Inicializando sistema...")
         
         # Probar conexión
         if not self.test_connection():
@@ -200,17 +200,17 @@ class DatabaseSetupWindow:
             }
             
             if init_database():
-                self.log("✅ Sistema inicializado correctamente")
-                self.log("🎉 ¡El sistema está listo para usar!")
+                self.log("[OK] Sistema inicializado correctamente")
+                self.log("[SUCCESS] ¡El sistema está listo para usar!")
                 messagebox.showinfo("Éxito", "Sistema inicializado correctamente.\n\n"
                                            "Credenciales por defecto:\n"
                                            "Usuario: admin\n"
                                            "Contraseña: admin123")
             else:
-                self.log("❌ Error al inicializar sistema")
+                self.log("[ERROR] Error al inicializar sistema")
                 
         except Exception as e:
-            self.log(f"❌ Error: {e}")
+            self.log(f"[ERROR] Error: {e}")
     
     def log(self, message):
         """Agregar mensaje al log"""
@@ -246,7 +246,7 @@ def crear_tabla_comunicados():
         """)
         
         if cursor.fetchone()[0]:
-            print("✅ Tabla 'comunicados' ya existe")
+            print("[OK] Tabla 'comunicados' ya existe")
             conn.close()
             return True
         
@@ -277,11 +277,11 @@ def crear_tabla_comunicados():
         
         conn.commit()
         conn.close()
-        print("✅ Tabla 'comunicados' creada exitosamente")
+        print("[OK] Tabla 'comunicados' creada exitosamente")
         return True
         
     except Exception as e:
-        print(f"❌ Error al crear tabla comunicados: {e}")
+        print(f"[ERROR] Error al crear tabla comunicados: {e}")
         if conn:
             conn.close()
         return False
@@ -310,7 +310,7 @@ def crear_tabla_comentarios():
         """)
         
         if cursor.fetchone()[0]:
-            print("✅ Tabla 'comentarios' ya existe")
+            print("[OK] Tabla 'comentarios' ya existe")
             conn.close()
             return True
         
@@ -333,66 +333,66 @@ def crear_tabla_comentarios():
         
         conn.commit()
         conn.close()
-        print("✅ Tabla 'comentarios' creada exitosamente")
+        print("[OK] Tabla 'comentarios' creada exitosamente")
         return True
         
     except Exception as e:
-        print(f"❌ Error al crear tabla comentarios: {e}")
+        print(f"[ERROR] Error al crear tabla comentarios: {e}")
         if conn:
             conn.close()
         return False
 
 def main():
     """Función principal para configurar la base de datos"""
-    print("🚀 Configurando base de datos del sistema...")
+    print("[INIT] Configurando base de datos del sistema...")
     
     # Crear tablas principales
     if crear_tabla_usuarios():
-        print("✅ Tabla usuarios configurada")
+        print("[OK] Tabla usuarios configurada")
     else:
-        print("❌ Error al configurar tabla usuarios")
+        print("[ERROR] Error al configurar tabla usuarios")
         return
     
     if crear_tabla_postulantes():
-        print("✅ Tabla postulantes configurada")
+        print("[OK] Tabla postulantes configurada")
     else:
-        print("❌ Error al configurar tabla postulantes")
+        print("[ERROR] Error al configurar tabla postulantes")
         return
     
     if crear_tabla_aparatos():
-        print("✅ Tabla aparatos configurada")
+        print("[OK] Tabla aparatos configurada")
     else:
-        print("❌ Error al configurar tabla aparatos")
+        print("[ERROR] Error al configurar tabla aparatos")
         return
     
     # Crear tablas nuevas
     if crear_tabla_comunicados():
-        print("✅ Tabla comunicados configurada")
+        print("[OK] Tabla comunicados configurada")
     else:
-        print("❌ Error al configurar tabla comunicados")
+        print("[ERROR] Error al configurar tabla comunicados")
         return
     
     if crear_tabla_comentarios():
-        print("✅ Tabla comentarios configurada")
+        print("[OK] Tabla comentarios configurada")
     else:
-        print("❌ Error al configurar tabla comentarios")
+        print("[ERROR] Error al configurar tabla comentarios")
         return
     
     # Crear usuario admin por defecto
     if crear_usuario_admin():
-        print("✅ Usuario admin creado")
+        print("[OK] Usuario admin creado")
     else:
-        print("❌ Error al crear usuario admin")
+        print("[ERROR] Error al crear usuario admin")
         return
     
-    print("\n🎉 ¡Base de datos configurada exitosamente!")
-    print("📋 Tablas creadas:")
+    print("\n[SUCCESS] ¡Base de datos configurada exitosamente!")
+    print("[CLIPBOARD] Tablas creadas:")
     print("   - usuarios")
     print("   - postulantes") 
     print("   - aparatos_biometricos")
     print("   - comunicados")
     print("   - comentarios")
-    print("\n👤 Usuario admin creado:")
+    print("\n[USER] Usuario admin creado:")
     print("   Usuario: admin")
     print("   Contraseña: admin123")
 

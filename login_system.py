@@ -90,14 +90,14 @@ class LoginWindow(tk.Frame):
                 img_label.image = photo  # Mantener referencia
                 img_label.pack(pady=(0, 20))
                 
-                print(f"✅ Imagen del instituto cargada correctamente desde: {img_path}")
+                print(f"[OK] Imagen del instituto cargada correctamente desde: {img_path}")
             else:
-                print(f"⚠️ No se encontró la imagen del instituto en ninguna ruta")
+                print(f"[WARN] No se encontró la imagen del instituto en ninguna ruta")
                 
         except ImportError:
-            print("⚠️ Pillow no está instalado. Ejecute: pip install Pillow")
+            print("[WARN] Pillow no está instalado. Ejecute: pip install Pillow")
         except Exception as e:
-            print(f"⚠️ No se pudo cargar la imagen del instituto: {e}")
+            print(f"[WARN] No se pudo cargar la imagen del instituto: {e}")
             # Si no se puede cargar la imagen, continuar sin ella
         
         # Título principal
@@ -426,7 +426,7 @@ class ChangePasswordDialog(tk.Toplevel):
                 
         except Exception as e:
             # Si hay error, simplemente continuar sin imagen
-            print(f"⚠️ Error cargando imagen institucional: {e}")
+            print(f"[WARN] Error cargando imagen institucional: {e}")
             pass
         
     def center_window(self):

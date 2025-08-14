@@ -96,14 +96,14 @@ class MenuPrincipal(tk.Frame):
                 img_label.image = photo  # Mantener referencia
                 img_label.pack(pady=(0, 20))
                 
-                print(f"✅ Imagen del instituto cargada correctamente desde: {img_path}")
+                print(f"[OK] Imagen del instituto cargada correctamente desde: {img_path}")
             else:
-                print(f"⚠️ No se encontró la imagen del instituto en ninguna ruta")
+                print(f"[WARN] No se encontró la imagen del instituto en ninguna ruta")
                 
         except ImportError:
-            print("⚠️ Pillow no está instalado. Ejecute: pip install Pillow")
+            print("[WARN] Pillow no está instalado. Ejecute: pip install Pillow")
         except Exception as e:
-            print(f"⚠️ No se pudo cargar la imagen del instituto: {e}")
+            print(f"[WARN] No se pudo cargar la imagen del instituto: {e}")
             # Si no se puede cargar la imagen, continuar sin ella
         
         # Mensaje de bienvenida con estilo moderno
@@ -454,12 +454,12 @@ class MenuPrincipal(tk.Frame):
                         # Redimensionar logo a 180x180 manteniendo proporción
                         logo_img = logo_img.resize((180, 180), Image.Resampling.LANCZOS)
                         logo_photo = ImageTk.PhotoImage(logo_img)
-                        print(f"✅ Logo cargado desde: {ruta}")
+                        print(f"[OK] Logo cargado desde: {ruta}")
                         return logo_photo
                     else:
-                        print(f"⚠️ Ruta no existe: {ruta}")
+                        print(f"[WARN] Ruta no existe: {ruta}")
                 except Exception as e:
-                    print(f"❌ Error cargando imagen {ruta}: {e}")
+                    print(f"[ERROR] Error cargando imagen {ruta}: {e}")
                     continue
             
             return None
@@ -558,9 +558,9 @@ def main():
     try:
         from icon_utils import set_large_256_icon
         if set_large_256_icon(root):
-            print("✅ Icono de 256px configurado correctamente en menú principal")
+            print("[OK] Icono de 256px configurado correctamente en menú principal")
     except ImportError:
-        print("⚠️ No se pudo importar icon_utils")
+        print("[WARN] No se pudo importar icon_utils")
     
     # Usuario de prueba (ID real de la base de datos)
     user_data = {
